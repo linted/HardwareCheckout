@@ -11,7 +11,7 @@ generate_key() {
 
 generate_db() {
     echo "[*] Generating database"
-    python3 -c "from HardwareCheckout import db, create_app; db.create_all(app=create_app())"
+    python3 ./setup.py
 }
 
 if [ ! -f db.key ]; then
