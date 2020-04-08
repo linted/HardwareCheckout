@@ -11,14 +11,13 @@ generate_key() {
 
 generate_db() {
     echo "[*] Generating database"
-    python3 ./setup.py
+    python3 ./setup.py -r
 }
 
 if [ ! -f db.key ]; then
     read -p "[?] db.key not found. Create new database? [y/N] " -n 1 confirm
     echo
     if [[ $confirm =~ ^[Yy]$ ]]; then
-        rm -f HardwareCheckout/db.sqlite
         generate_key
         generate_db
     else
