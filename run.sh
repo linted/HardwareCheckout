@@ -11,7 +11,7 @@ generate_key() {
 
 generate_db() {
     echo "[*] Generating database"
-    python3 ./setup.py -r
+    python3 ./setup.py -c
 }
 
 if [ ! -f db.key ]; then
