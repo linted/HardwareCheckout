@@ -37,6 +37,9 @@ if [ ! -f HardwareCheckout/db.sqlite ]; then
     read -p "[?] Database not found. Create new database? [y/N] " -n 1 confirm
     echo
     if [[ $confirm =~ ^[Yy]$ ]]; then
+         if [ ! -d "$SQLITEPATH" ]; then
+                mkdir $SQLITEPATH
+         fi
         generate_db
         chown root:www-data $SQLITEPATH
         chmod 775 $SQLITEPATH
