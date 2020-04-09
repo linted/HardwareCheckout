@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
 export FLASK_APP=HardwareCheckout.main
+DBKEY=db.key
+SQLITEPATH=/opt/database
+SQLITEDB=$SQLITEPATH/db.sqlite
 
 generate_key() {
     echo "[*] Generating keys"
     export FLASK_SECRET_KEY=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
-    echo $FLASK_SECRET_KEY > db.key
-    chmod 600 db.key
+    echo $FLASK_SECRET_KEY > $DBKEY
+    chown root:www-data $DBKEY
+    chmod 640 ./$DBKEY
+
 }
 
 generate_db() {
@@ -33,10 +38,14 @@ if [ ! -f HardwareCheckout/db.sqlite ]; then
     echo
     if [[ $confirm =~ ^[Yy]$ ]]; then
         generate_db
+        chown root:www-data $SQLITEPATH
+        chmod 775 $SQLITEPATH
+        chown root:www-data $SQLITEDB
+        chmod 660 $SQLITEDB
     else
         echo "[!] Abort"
         exit
     fi
 fi
 
-flask run
+#flask run
