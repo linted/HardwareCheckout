@@ -51,4 +51,4 @@ if [ ! -f $SQLITEDB ]; then
     fi
 fi
 
-#flask run
+python3 -m HardwareCheckout
