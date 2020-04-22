@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 export FLASK_APP=HardwareCheckout.main
-DBKEY=db.key
+DBKEY=cookie.key
 SQLITEPATH=/opt/database
 SQLITEDB=$SQLITEPATH/db.sqlite
 
 generate_key() {
     echo "[*] Generating keys"
-    export FLASK_SECRET_KEY=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
-    echo $FLASK_SECRET_KEY > $DBKEY
+    export TORNADO_SECRET_KEY=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
+    echo $TORNADO_SECRET_KEY > $DBKEY
     chown root:www-data $DBKEY
     chmod 640 ./$DBKEY
 
@@ -22,7 +22,7 @@ generate_db() {
     python3 ./setup.py -c
 }
 
-if [ ! -f db.key ]; then
+if [ ! -f $DBKEY ]; then
     read -p "[?] db.key not found. Create new database? [y/N] " -n 1 confirm
     echo
     if [[ $confirm =~ ^[Yy]$ ]]; then
