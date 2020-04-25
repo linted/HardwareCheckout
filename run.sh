@@ -33,7 +33,7 @@ if [ ! -f $DBKEY ]; then
         exit
     fi
 else
-    export FLASK_SECRET_KEY=$(cat db.key)
+    export export TORNADO_SECRET_KEY=$(cat $DBKEY)
 fi
 
 if [ ! -f $SQLITEDB ]; then
