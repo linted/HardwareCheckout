@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 export FLASK_APP=HardwareCheckout.main
-DBKEY=db.key
+DBKEY=cookie.key
 SQLITEPATH=/opt/database
 SQLITEDB=$SQLITEPATH/db.sqlite
 
 generate_key() {
     echo "[*] Generating keys"
-    export FLASK_SECRET_KEY=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
-    echo $FLASK_SECRET_KEY > $DBKEY
+    export TORNADO_SECRET_KEY=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
+    echo $TORNADO_SECRET_KEY > $DBKEY
     chown root:www-data $DBKEY
     chmod 640 ./$DBKEY
 
@@ -16,10 +16,13 @@ generate_key() {
 
 generate_db() {
     echo "[*] Generating database"
+    if [ ! -d "$SQLITEPATH" ]; then
+       mkdir $SQLITEPATH
+    fi
     python3 ./setup.py -c
 }
 
-if [ ! -f db.key ]; then
+if [ ! -f $DBKEY ]; then
     read -p "[?] db.key not found. Create new database? [y/N] " -n 1 confirm
     echo
     if [[ $confirm =~ ^[Yy]$ ]]; then
@@ -30,10 +33,10 @@ if [ ! -f db.key ]; then
         exit
     fi
 else
-    export FLASK_SECRET_KEY=$(cat db.key)
+    export export TORNADO_SECRET_KEY=$(cat $DBKEY)
 fi
 
-if [ ! -f HardwareCheckout/db.sqlite ]; then
+if [ ! -f $SQLITEDB ]; then
     read -p "[?] Database not found. Create new database? [y/N] " -n 1 confirm
     echo
     if [[ $confirm =~ ^[Yy]$ ]]; then
@@ -48,4 +51,4 @@ if [ ! -f HardwareCheckout/db.sqlite ]; then
     fi
 fi
 
-#flask run
+python3 -m HardwareCheckout
