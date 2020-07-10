@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import configparser
 import argparse
-from uuid import uuid4
-from os import mkdir
+from os import mkdir,urandom
 
 parser = argparse.ArgumentParser()
 parser.add_argument("prefix", help="device name prefix")
@@ -24,14 +23,13 @@ for i in range(args.count):
         pass
     config[name] = {
         "username": "{}-{}".format(args.prefix, name),
-        "password": uuid4(),
+        "password":  urandom(32).hex(),
         "data_dir": data_dir,
     }
 
-# TODO better password generation
 config["controller"] = {
     "username": "{}-controller".format(args.prefix),
-    "password": uuid4(),
+    "password":  urandom(32).hex(),
 }
 
 with open("/opt/hc-client/.config.ini", "w") as confout:
