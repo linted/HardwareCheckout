@@ -1,12 +1,13 @@
 from configparser import ConfigParser
 from functools import partial
+from contextlib import contextmanager
 
-from tornado.web import authenticated, MissingArgumentError
+from tornado.web import authenticated, MissingArgumentError, RequestHandler
 from werkzeug.security import generate_password_hash
-from tornado_sqlalchemy import as_future
+from tornado_sqlalchemy import SessionMixin, as_future
 
-from .models import DeviceQueue, Role, DeviceType, User
-from .webutil import Blueprint, UserBaseHandler
+from .models import DeviceQueue, Role, DeviceType, User, UserQueue
+from .webutil import Blueprint, UserBaseHandler, make_session
 from .auth import PASSWORD_CRYPTO_TYPE
 from .device import DeviceStateHandler
 
@@ -16,6 +17,14 @@ admin = Blueprint()
 class AdminHandler(UserBaseHandler):
     @authenticated
     async def get(self):
+        with self.make_session() as session:
+            try:
+                queues = await as_future(session.query(User.name, UserQueue.type).select_from(UserQueue).join(User).order_by(UserQueue.id).all)
+                print("queues", queues)
+            except Exception as e:
+                # todo render an error page
+                return "Error while finding queues"
+
         self.render('admin.html', messages=None)
 
     @authenticated
@@ -39,7 +48,7 @@ class AdminHandler(UserBaseHandler):
             errors = await self.rmDevice()
         elif req_type == "killSession":
             errors = await self.killSession()
-        
+
         return self.render("admin.html", messages=errors)
 
     async def addDeviceType(self):
@@ -74,7 +83,7 @@ class AdminHandler(UserBaseHandler):
                         DeviceQueue(
                             name=config[section]['username'],
                             password=generate_password_hash(
-                                config[section]["password"], 
+                                config[section]["password"],
                                 method=PASSWORD_CRYPTO_TYPE
                             ),
                             state="want-provision",
@@ -86,7 +95,7 @@ class AdminHandler(UserBaseHandler):
                     continue
 
         return error_msg
-        
+
     async def addAdmin(self):
         try:
             username = self.get_argument("username")
@@ -107,9 +116,9 @@ class AdminHandler(UserBaseHandler):
                     partial(
                         session.add,
                         User(
-                            name=username, 
+                            name=username,
                             password=generate_password_hash(
-                                password, 
+                                password,
                                 method=PASSWORD_CRYPTO_TYPE
                             ),
                             roles=[admin, human, device]
@@ -163,3 +172,4 @@ class AdminHandler(UserBaseHandler):
             except Exception:
                 return "Error while looking up device"
         DeviceStateHandler.killSession(deviceID)
+
