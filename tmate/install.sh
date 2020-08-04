@@ -18,7 +18,7 @@ if test -z "$CTF_MODE"; then
 fi
 
 UNAMES=""
-for i in $(seq ${NUM_SESSIONS}); do
+for i in $( seq 0 $((${NUM_SESSIONS} - 1)) ); do
     UNAMES="${UNAMES} villager-device$i "
 done
 
@@ -176,6 +176,7 @@ sudo $SCRIPTPATH/create_config.py $2 "${NUM_SESSIONS}"
 sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH/
 
 if [[ "${INIT}" == "systemd" ]]; then
+    #TODO: generate contents of session@.service based on NUM_SESSIONS
     sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system/ || die "couldn't install systemd stuff"
     sudo systemctl daemon-reload || die "couldn't daemon-reload"
     sudo systemctl start session.target || die "couldn't start session.target"
