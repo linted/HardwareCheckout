@@ -57,7 +57,7 @@ prep_user() {
 
     sudo chattr -R -i /home/$UNAME
 
-    if grep -vq '617-440-8667' /home/$UNAME/.bashrc; then
+    if ! grep -q '617-440-8667' /home/$UNAME/.bashrc; then
         cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 
 
