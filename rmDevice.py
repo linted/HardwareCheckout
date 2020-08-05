@@ -10,7 +10,7 @@ import os
 import configparser
 
 parser = ArgumentParser()
-parser.add_argument("-d","--devicename", help="Device name", required=False)
+parser.add_argument("-u","--username", help="Device user name", required=False)
 parser.add_argument('-i', '--ini', help='Ini file containing list of devices', required=False)
 args = parser.parse_args()
 
@@ -43,16 +43,16 @@ def printHelp():
     print("python3 rmDevice.py -i <path/to/inifile>")
     print()
     print("Remove a single device:")
-    print("python3 rmDevice.py -d <devicename>")
+    print("python3 rmDevice.py -u <devicename>")
     sys.exit(1)
 
 def main():
     if args.ini and args.devicename:
         print ("You cannot define a device name and a ini file at the same time!!")
-    elif args.devicename:
-        removeDevice(args.devicename)
+    elif args.username:
+        removeDevice(args.username)
     else:
-        if not args.ini or not args.devicename:
+        if not args.ini or not args.username:
             parser.print_help(sys.stderr)
             print ("")
             printHelp()
