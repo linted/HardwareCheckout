@@ -181,3 +181,8 @@ If you're _re-installing_ or if your users are having trouble seeing connected d
 ```sh
 sudo systemctl restart 'session@*'
 ```
+
+You can inspect the current state of any tmate session by with `tmate/session-inspect.sh` all of the following will work:
+* `sudo ./tmate/session-inspect.sh villager-device0`
+* `sudo ./tmate/session-inspect.sh /tmp/devices/device0/device0.sock`
+* `sudo ./tmate/session-inspect.sh device0`
