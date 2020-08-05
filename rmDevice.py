@@ -14,7 +14,7 @@ parser.add_argument("-u","--username", help="Device user name", required=False)
 parser.add_argument('-i', '--ini', help='Ini file containing list of devices', required=False)
 args = parser.parse_args()
 
-ession = sessionmaker(bind=create_engine(db_path))
+session = sessionmaker(bind=create_engine(db_path))
 s = session()
 
 def iniParse(confPath):
