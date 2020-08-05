@@ -118,7 +118,7 @@
 let player{{count}} = new Twitch.Player("stream-{{count}}", {
         width: 360,
         height: 280,
-        channel: "{{tstreams[count]}}"
+        channel: "{{tstreams[count][0]}}"
     });
 {% end %}
 </script>
