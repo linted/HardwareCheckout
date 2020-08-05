@@ -9,7 +9,9 @@ ExecStartPre=/bin/su villager-%i -c "install -m 700 -d /tmp/devices/%i"
 ExecStartPre=-/usr/bin/pkill -9 -u villager-%i
 ExecStart=/bin/su villager-%i -c "/usr/bin/tmate -F -S /tmp/devices/%i/%i.sock new-session"
 EnvironmentFile=/root/%i
-Restart=on-failure
+Restart=always
+After=network-online.target
+Wants=network-online.target
 
 [Install]
 WantedBy=multi-user.target
