@@ -140,7 +140,11 @@ The server will come up on `https://127.0.0.1`
 `./addDevice.py -u <devicename> -p <password> -t <devicetype>`
 
 ### Remove device
-- `./rmDevice.py -d <device name>`
+- Remove multiple devices:
+`./rmDevice.py -i <path/to/inifile>`
+
+- Remove a single device:
+`./rmDevice.py -u <devicename>`
 
 ### Add Twitch stream (on the server side)
 - `./addTwitchStream.py -n <streamname>`
