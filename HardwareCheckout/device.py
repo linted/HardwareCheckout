@@ -112,7 +112,7 @@ class DeviceStateHandler(UserBaseHandler):
             deviceID = device.id
             deviceType = device.type
 
-        await DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
+        # await DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
 
     async def handle_session_join(self, entity, user_data, params):
         # Check if it is a read only session. We only care about R/W sessions
