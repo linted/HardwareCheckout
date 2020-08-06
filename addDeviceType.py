@@ -7,10 +7,11 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--type', help="Device type to add", required=True)
+parser.add_argument("-p", '--picture', help="name of the picture to add", required=True)
 args = parser.parse_args()
 
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
-s.add(DeviceType(name=args.type,enabled=1))
+s.add(DeviceType(name=args.type,enabled=1,path=args.picture))
 s.commit()
