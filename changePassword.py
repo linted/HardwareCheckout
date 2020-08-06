@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-from HardwareCheckout import db, create_app
-from HardwareCheckout.models import User, Role
+from HardwareCheckout.models import User 
 from HardwareCheckout.config import db_path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
