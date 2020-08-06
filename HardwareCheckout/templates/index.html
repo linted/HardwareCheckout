@@ -18,7 +18,7 @@
             {% if pictures %}
             <div class="car-icon-row">
             {% for picture in pictures %}
-                {% if picture.enabled == 1 %} 
+                {% if picture.enabled == 1 %}
                 <div class="car-icon-group">
                     <img src="/static/images/{{picture.image_path}}"/>
                     <div class="car-icon-group--make-model">{{ picture.name }}</div>
@@ -122,7 +122,7 @@
                         <div id="stream-{{ count }}" class="twitch-stream"></div>
                     {% end %}
                 </div>
-            {% end %}      
+            {% end %}
         </div>
         {% end %}
 
@@ -134,7 +134,7 @@
 
         {% for term in terminals %}
         <div id="{{term[0]}}" class="tabcontent">
-            <iframe  id="{{ term[0] }}-frame" src="{{term[1]}}" style="height:100%;width:100%;"></iframe>
+            <iframe  id="{{ term[0] }}-frame" src="{{term[1]}}" style="height:400px;width:100%;"></iframe>
         </div>
         {% end %}
     </div>
@@ -152,4 +152,3 @@ let player{{count}} = new Twitch.Player("stream-{{count}}", {
 {% end %}
 </script>
 {% end %}
-

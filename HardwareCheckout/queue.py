@@ -31,7 +31,7 @@ class QueueWSHandler(UserBaseHandler, WebSocketHandler):
 
     async def open(self):
         if self.current_user:
-            if self.closed[self.current_user]:
+            if self.closed.get(self.current_user,False):
                 self.closed[self.current_user].stop()
                 del self.closed[self.current_user]
             self.waiters[self.current_user].add(self)
