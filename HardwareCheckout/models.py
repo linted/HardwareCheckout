@@ -69,6 +69,7 @@ class DeviceType(db.Model):
     id = Column(Integer, primary_key=True)
     name = Column(String(250), unique=True)
     enabled = Column(Integer)
+    image_path = Column(String(200))
 
 
 class UserQueue(db.Model):

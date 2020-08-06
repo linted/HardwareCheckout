@@ -13,6 +13,7 @@ class MainHandler(UserBaseHandler):
     RWTerminals = []
     ROTerminals = []
     queues = []
+    pictures = []
     tstreams = []
     lock = locks.Lock()
     
@@ -28,6 +29,7 @@ class MainHandler(UserBaseHandler):
         devices = []
         queues = []
         tstreams = self.tstreams
+        pictures = self.pictures
         
         # If no background queue update thread as started, start it
         if self.timer is None:
@@ -57,15 +59,17 @@ class MainHandler(UserBaseHandler):
             # get a listing of all the queues available
             # Make a copy of the list because we are iterating through it
             tqueues = self.queues
-            queues = [{"id": i[0], "name": i[1], "size": i[2]} for i in tqueues]
-        self.render('index.html', devices=devices, tstreams=tstreams, queues=queues, show_streams=show_streams, terminals=terminals)
+            queues = [{"id": i[0], "name": i[1], "image": i[3], "size": i[3]} for i in tqueues]
+
+        self.render('index.html', devices=devices, tstreams=tstreams, queues=queues, show_streams=show_streams, terminals=terminals, pictures=pictures)
 
     @classmethod
     async def updateQueues(cls):
         async with cls.lock:
             with make_session() as session:
                 cls.RWTerminals = await as_future(session.query(User.name, DeviceQueue.webUrl).join(User.deviceQueueEntry).filter_by(state="in-use").all)
+                cls.queues      = await as_future(session.query(DeviceType.id, DeviceType.name, DeviceType.image_path, func.count(UserQueue.userId)).select_from(DeviceType).filter_by(enabled=1).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
                 cls.ROTerminals = await as_future(session.query(User.name, DeviceQueue.roUrl).join(User.deviceQueueEntry).filter(DeviceQueue.state=="in-use").filter(User.ctf==0).all)
-                cls.queues      = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId)).select_from(DeviceType).filter_by(enabled=1).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
                 cls.tstreams    = await as_future(session.query(TwitchStream.name).all)
+                cls.pictures    = await as_future(session.query(DeviceType.image_path, DeviceType.name, DeviceType.enabled).all)
                 
