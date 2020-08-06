@@ -11,7 +11,6 @@ parser = ArgumentParser()
 parser.add_argument("-u","--username", help="User name", required=True)
 parser.add_argument("-p","--password", help="User password", required=True)
 args = parser.parse_args()
-# parser.add_argument("Roles", nargs='+')
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()
