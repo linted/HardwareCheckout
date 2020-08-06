@@ -39,6 +39,8 @@ class AdminHandler(UserBaseHandler):
             errors = await self.rmDevice()
         elif req_type == "killSession":
             errors = await self.killSession()
+        elif req_type == "toggleQueue":
+            errors = await self.toggle_queue()
         
         return self.render("admin.html", messages=errors)
 
@@ -163,3 +165,18 @@ class AdminHandler(UserBaseHandler):
             except Exception:
                 return "Error while looking up device"
         DeviceStateHandler.killSession(deviceID)
+
+    async def toggle_queue(self):
+        try:
+            queueID = self.get_argument("queue")
+        except MissingArgumentError:
+            return "Missing Device name"
+
+        with self.make_session() as session:
+            try:
+                queue = await as_future(session.query(DeviceType).filter_by(id=queueID).one)
+            except Exception:
+                return "Failed to find that queue type"
+            
+            queue.enabled = 1 if not queue.enabled else 0
+            
