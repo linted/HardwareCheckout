@@ -47,7 +47,7 @@ def printHelp():
     sys.exit(1)
 
 def main():
-    if args.ini and args.devicename:
+    if args.ini and args.username:
         print ("You cannot define a device name and a ini file at the same time!!")
     elif args.username:
         removeDevice(args.username)
