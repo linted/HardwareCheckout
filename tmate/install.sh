@@ -139,7 +139,7 @@ sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
 if [ -f $SCRIPTPATH/session.target.bak ]; then
     mv $SCRIPTPATH/session.target.bak  $SCRIPTPATH/session.target
 fi
-sed -i.bak "s/controller.service/controller.service $(for i in $(seq 0 $((NUM_SESSIONS-1))); do echo session@$i.service; done)/" $SCRIPTPATH/session.target
+sed -i.bak "s/controller.service/controller.service $(echo $(for i in $(seq 0 $((NUM_SESSIONS-1))); do echo session@device$i.service; done))/" $SCRIPTPATH/session.target
 
 for name in $UNAMES; do
     prep_user $name
