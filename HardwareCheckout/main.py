@@ -13,6 +13,7 @@ class MainHandler(UserBaseHandler):
     RWTerminals = []
     ROTerminals = []
     queues = []
+    pictures = []
     tstreams = []
     lock = locks.Lock()
     
@@ -59,6 +60,7 @@ class MainHandler(UserBaseHandler):
             # Make a copy of the list because we are iterating through it
             tqueues = self.queues
             queues = [{"id": i[0], "name": i[1], "image": i[3], "size": i[3]} for i in tqueues]
+
         self.render('index.html', devices=devices, tstreams=tstreams, queues=queues, show_streams=show_streams, terminals=terminals, pictures=pictures)
 
     @classmethod
