@@ -136,6 +136,10 @@ if [ -f $SCRIPTPATH/.tmate.conf.bak ]; then
     mv $SCRIPTPATH/.tmate.conf.bak $SCRIPTPATH/.tmate.conf
 fi
 sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
+if [ -f $SCRIPTPATH/session.target.bak ]; then
+    mv $SCRIPTPATH/session.target.bak  $SCRIPTPATH/session.target
+fi
+sed -i.bak "s/controller.service/controller.service $(echo session@device{0..5}.service)/" $SCRIPTPATH/session.target
 
 for name in $UNAMES; do
     prep_user $name
