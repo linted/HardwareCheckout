@@ -8,6 +8,35 @@
 
 {% block content %}
     <div class="container">
+        <div class="content">
+            <div class="section-header">About</div>
+            <div class="about-text">
+                <p>With DEFCON in safe mode this year, CHV has gone virtual as well.  But that doesn't mean you can't hack cars.  We have a number of cars across the globe connected to Raspberry Pis, allowing hackers to SSH in and <a href="https://www.carhackingvillage.com/getting-started">send CAN messages</a>.  </p>
+                <p>How does it work?  First, <a href="/signup">sign up</a> for an account, and <a href="/login">log in</a>.  Next, click "Join Queue" on the car you want to hack.  </p>
+                <p>Once you're to the front of the line, you'll see a console appear with SSH instructions.  You'll have 30 minutes with the vehicle to solve <a href="https://www.carhackingvillage.com/grimmcon-ctf">CTF challenges</a> or whatever else you'd like.</p>
+            </div>
+            {% if pictures %}
+            <div class="car-icon-row">
+            {% for picture in pictures %}
+                {% if picture.enabled == 1 %} 
+                <div class="car-icon-group">
+                    <img src="/static/images/{{picture.image_path}}"/>
+                    <div class="car-icon-group--make-model">{{ picture.name }}</div>
+                </div>
+                {% end %}
+                {% if picture.enabled == 0 %}
+                <div class="car-icon-group car-icon-group--disabled">
+                    <img src="/static/images/{{picture.image_path}}"/>
+                    <div class="car-icon-group--make-model">{{ picture.name }} [offline]</div>
+                </div>
+                {% end %}
+            {% end %}
+            </div>
+            {% end %}
+        </div>
+
+        <div class="breaker-line"></div>
+
         <div id="devices" class="content">
         {% if devices %}
             <div class="section-header">Devices available</div>
