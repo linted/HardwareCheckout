@@ -51,6 +51,11 @@
                         {% end %}
 
                         {% if current_user %}
+                            {% if adminuser %}
+                            	<a href="{{ '/admin' }}" class="navbar-item">
+                                	Admin Tools
+                            	</a>
+                        	{% end %}
                             <a href="{{ '/logout' or reverse_url('auth.logout') }}" class="navbar-item">
                                 Logout
                             </a>

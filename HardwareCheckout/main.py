@@ -30,6 +30,7 @@ class MainHandler(UserBaseHandler):
         queues = []
         tstreams = self.tstreams
         pictures = self.pictures
+        adminuser = False
         
         # If no background queue update thread as started, start it
         if self.timer is None:
@@ -48,6 +49,7 @@ class MainHandler(UserBaseHandler):
                     pass
                 else:
                     if current_user.has_roles('Admin'):
+                        adminuser = True
                         terminals = self.RWTerminals
                         show_streams = False
                         devices = []
@@ -61,7 +63,7 @@ class MainHandler(UserBaseHandler):
             tqueues = self.queues
             queues = [{"id": i[0], "name": i[1], "image": i[3], "size": i[3]} for i in tqueues]
 
-        self.render('index.html', devices=devices, tstreams=tstreams, queues=queues, show_streams=show_streams, terminals=terminals, pictures=pictures)
+        self.render('index.html', devices=devices, tstreams=tstreams, queues=queues, show_streams=show_streams, terminals=terminals, pictures=pictures, adminuser=adminuser)
 
     @classmethod
     async def updateQueues(cls):
