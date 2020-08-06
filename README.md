@@ -190,3 +190,9 @@ You can inspect the current state of any tmate session by with `tmate/session-in
 * `sudo ./tmate/session-inspect.sh villager-device0`
 * `sudo ./tmate/session-inspect.sh /tmp/devices/device0/device0.sock`
 * `sudo ./tmate/session-inspect.sh device0`
+
+You can watch all the 'logs' from the tmate sessions and the controller with
+
+```sh
+sudo journalctl -f -u session@device0.service -u session@device1.service -u session@device2.service -u session@device3.service -u session@device4.service -u session@device5.service -u controller
+```
