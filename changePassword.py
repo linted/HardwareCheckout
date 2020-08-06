@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from HardwareCheckout import db, create_app
 from HardwareCheckout.models import User, Role
+from HardwareCheckout.config import db_path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from werkzeug.security import generate_password_hash
@@ -12,15 +13,15 @@ parser.add_argument("-p","--password", help="User password", required=True)
 args = parser.parse_args()
 # parser.add_argument("Roles", nargs='+')
 
-session = sessionmaker(bind=create_engine('sqlite:///HardwareCheckout/db.sqlite'))
+session = sessionmaker(bind=create_engine(db_path))
 s = session()
 
-device = s.query(User).filter_by(name=args.username).first()
-if not device:
-    print("no device")
+username = s.query(User).filter_by(name=args.username).first()
+if not username:
+    print("no user found")
     exit(0)
 
-device.password = generate_password_hash(
+username.password = generate_password_hash(
                 args.password, 
                 method="pbkdf2:sha256:45000"
             )
