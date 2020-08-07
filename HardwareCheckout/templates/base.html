@@ -51,7 +51,7 @@
                         {% end %}
 
                         {% if current_user %}
-                            {% if adminuser %}
+                            {% if 'adminuser' in globals() and adminuser %}
                             	<a href="{{ '/admin' }}" class="navbar-item">
                                 	Admin Tools
                             	</a>
