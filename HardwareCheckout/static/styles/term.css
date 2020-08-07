@@ -463,6 +463,12 @@ a:hover {
   margin-bottom: 32px;
   margin-top: 32px;
   align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.car-icon-group {
+  margin-right: 32px;
+  margin-left: 32px;
 }
 
 .car-icon-group img {
