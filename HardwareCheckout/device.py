@@ -297,7 +297,6 @@ class ControllerHandler(DeviceWSHandler):
                 self.__listeners[params] = self
             except Exception:
                 return
-        print(self.__listeners)
 
     async def close(self):
         self.__listeners.pop(self.device)
