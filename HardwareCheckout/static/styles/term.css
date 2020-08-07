@@ -450,3 +450,7 @@ a:hover {
   width: 600px !important;
   min-width: 600px !important;
 }
+
+.queue-table--row {
+  color: white;
+}
