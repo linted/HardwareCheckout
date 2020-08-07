@@ -307,7 +307,7 @@ class ControllerHandler(DeviceWSHandler):
         with make_session() as session:
             deviceName = await as_future(session.query(DeviceQueue.name).filter_by(id=device).one)
         try:
-            await cls.__listeners[device].write_message({"type":"restart", "params":deviceName[0]})
+            await cls.__listeners[deviceName[0]].write_message({"type":"restart", "params":deviceName[0]})
         except Exception:
             return False
         return True
