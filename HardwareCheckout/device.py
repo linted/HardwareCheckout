@@ -277,7 +277,7 @@ class ControllerHandler(DeviceWSHandler):
         # TODO : change this check to require a controller user name and password
         # not just any device.
         self.device = await self.check_authentication()
-        self.__listeners[self.device] = self
+        # self.__listeners[self.device] = self
 
     async def on_message(self, message):
         try:
@@ -294,18 +294,20 @@ class ControllerHandler(DeviceWSHandler):
             if not params:
                 return
             try:
-                for device in params:
-                    self.__listeners[device] = self
+                self.__listeners[params] = self
             except Exception:
                 return
+        print(self.__listeners)
 
     async def close(self):
         self.__listeners.pop(self.device)
 
     @classmethod
     async def restart_device(cls, device):
+        with make_session() as session:
+            deviceName = await as_future(session.query(DeviceQueue.name).filter_by(id=device).one)
         try:
-            await cls.__listeners[device].write_message({"type":"restart", "params":device})
+            await cls.__listeners[device].write_message({"type":"restart", "params":deviceName[0]})
         except Exception:
             return False
         return True

@@ -164,7 +164,7 @@ class AdminHandler(UserBaseHandler):
                 deviceID = await as_future(session.query(DeviceQueue.id).filter_by(name=deviceName).one)
             except Exception:
                 return "Error while looking up device"
-        await DeviceStateHandler.killSession(deviceID)
+        await DeviceStateHandler.killSession(deviceID[0])
 
     async def toggle_queue(self):
         try:

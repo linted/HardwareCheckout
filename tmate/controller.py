@@ -60,15 +60,15 @@ class Client(object):
             if msg is None:
                 break
             else:
-                self.handle_message(msg)
+                await self.handle_message(msg)
 
-    def keep_alive(self):
+    async def keep_alive(self):
         if self.ws is None:
-            self.connect()
+            await self.connect()
         else:
             print("Keep Alive")
             try:
-                self.ws.write_message(json_encode({"type": "keep-alive"}))
+                await self.ws.write_message(json_encode({"type": "keep-alive"}))
             except Exception:
                 self.ws = None
                 IOLoop.current().add_callback(self.keep_alive)
@@ -88,8 +88,13 @@ class Client(object):
             await self.kill(params)
 
     async def kill(self, device):
+        for keys in self.profiles:
+            if self.profiles[keys]["username"] == device:
+                deviceName = keys
+                break
+
         p = subprocess(
-            ["pkill", "-u", "villager-" + device], 
+            ["pkill", "-u", "villager-" + deviceName], 
             stdout = subprocess.STREAM, 
             stderr = subprocess.STREAM
             )
@@ -142,8 +147,8 @@ async def register_device(path, client, profiles):
 
         clientProfile = profiles.get(profile_name, False)
         if clientProfile:
-            print("Registering new Client: {}".format(profile_name))
-            await client.register_device(profile_name)
+            print("Registering new Client: {}".format(clientProfile['username']))
+            await client.register_device(clientProfile['username'])
             
 
 
