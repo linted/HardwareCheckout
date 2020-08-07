@@ -19,11 +19,12 @@ device_re = re.compile(r"^.*(device\d+)$")
 class Client(object):
     devices = {}
 
-    def __init__(self, url, username, password, timeout = 300):
+    def __init__(self, url, username, password, profiles, timeout = 300):
         self.url = url
         self.username = username
         self.password = password
         self.timeout = timeout
+        self.profiles = profiles
 
     def auth_header(self, username, password):
         return {
@@ -40,6 +41,12 @@ class Client(object):
 
             PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
             IOLoop.current().add_callback(self.recv_loop)
+
+            for files in os.listdir("/tmp/devices"):
+                full_path = os.path.join("/tmp/devices", files)
+                if os.path.isdir(full_path):
+                    await register_device(full_path, self, self.profiles)
+
         except Exception:
             print("connection error")
             self.ws = None
@@ -60,7 +67,11 @@ class Client(object):
             self.connect()
         else:
             print("Keep Alive")
-            self.ws.write_message(json_encode({"type": "keep-alive"}))
+            try:
+                self.ws.write_message(json_encode({"type": "keep-alive"}))
+            except Exception:
+                self.ws = None
+                IOLoop.current().add_callback(self.keep_alive)
 
     async def handle_message(self, message):
         try:
@@ -88,19 +99,6 @@ class Client(object):
         except Exception:
             return False
         return True
-
-    # async def deprovision(self, device):
-    #     p = subprocess(
-    #         ["tmate", "-S", os.path.join("/tmp/devices/", device, "{}.sock".format(device)), "wait", "tmate-ready"], 
-    #         stdout = subprocess.STREAM, 
-    #         stderr = subprocess.STREAM
-    #         )
-
-    #     try:
-    #         await p.wait_for_exit()
-    #     except Exception:
-    #         return False
-    #     return True
 
     async def register_device(self, device):
         self.ws.write_message(json_encode({'type':"register", "params":device}))
@@ -152,7 +150,7 @@ async def register_device(path, client, profiles):
 async def main():
     profiles = get_profiles()
 
-    newClient = Client("wss://localhost:8080/device/controller", profiles['controller']["username"], profiles['controller']["password"])
+    newClient = Client("wss://localhost:8080/device/controller", profiles['controller']["username"], profiles['controller']["password"], profiles)
     await newClient.connect()
 
     # Create the watch manager
@@ -163,11 +161,6 @@ async def main():
         watch_manager, IOLoop.current(), New_Device_Handler(client=newClient, profiles=profiles)
     )
     watch_manager.add_watch("/tmp/devices", pyinotify.IN_CREATE)
-
-    for files in os.listdir("/tmp/devices"):
-        full_path = os.path.join("/tmp/devices", files)
-        if os.path.isdir(full_path):
-            await register_device(full_path, newClient, profiles)
 
     # event_notifier.stop()
 
