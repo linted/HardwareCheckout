@@ -1,12 +1,13 @@
 from configparser import ConfigParser
 from functools import partial
-
-from tornado.web import authenticated, MissingArgumentError
+from contextlib import contextmanager
+from sqlalchemy import func
+from tornado.web import authenticated, MissingArgumentError, RequestHandler
 from werkzeug.security import generate_password_hash
-from tornado_sqlalchemy import as_future
+from tornado_sqlalchemy import SessionMixin, as_future
 
-from .models import DeviceQueue, Role, DeviceType, User
-from .webutil import Blueprint, UserBaseHandler
+from .models import DeviceQueue, Role, DeviceType, User, UserQueue
+from .webutil import Blueprint, UserBaseHandler, make_session
 from .auth import PASSWORD_CRYPTO_TYPE
 from .device import DeviceStateHandler
 
@@ -16,7 +17,14 @@ admin = Blueprint()
 class AdminHandler(UserBaseHandler):
     @authenticated
     async def get(self):
-        self.render('admin.html', messages=None)
+        with self.make_session() as session:
+            try:
+                queues = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId), DeviceType.enabled).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
+            except Exception as e:
+                # todo render an error page
+                return "Error while finding queues"
+
+        self.render('admin.html', queues=queues, messages=None)
 
     @authenticated
     async def post(self):
@@ -41,8 +49,18 @@ class AdminHandler(UserBaseHandler):
             errors = await self.killSession()
         elif req_type == "toggleQueue":
             errors = await self.toggle_queue()
-        
-        return self.render("admin.html", messages=errors)
+
+        # update queues
+        with self.make_session() as session:
+            try:
+                queues = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId), DeviceType.enabled).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
+                print("queues", queues)
+            except Exception as e:
+                # todo render an error page
+                return "Error while finding queues"
+ 
+        return self.render("admin.html", queues=queues, messages=errors)
+
 
     async def addDeviceType(self):
         try:
@@ -76,7 +94,7 @@ class AdminHandler(UserBaseHandler):
                         DeviceQueue(
                             name=config[section]['username'],
                             password=generate_password_hash(
-                                config[section]["password"], 
+                                config[section]["password"],
                                 method=PASSWORD_CRYPTO_TYPE
                             ),
                             state="want-provision",
@@ -88,7 +106,7 @@ class AdminHandler(UserBaseHandler):
                     continue
 
         return error_msg
-        
+
     async def addAdmin(self):
         try:
             username = self.get_argument("username")
@@ -109,9 +127,9 @@ class AdminHandler(UserBaseHandler):
                     partial(
                         session.add,
                         User(
-                            name=username, 
+                            name=username,
                             password=generate_password_hash(
-                                password, 
+                                password,
                                 method=PASSWORD_CRYPTO_TYPE
                             ),
                             roles=[admin, human, device]
@@ -164,7 +182,8 @@ class AdminHandler(UserBaseHandler):
                 deviceID = await as_future(session.query(DeviceQueue.id).filter_by(name=deviceName).one)
             except Exception:
                 return "Error while looking up device"
-        DeviceStateHandler.killSession(deviceID)
+
+        await DeviceStateHandler.killSession(deviceID[0])
 
     async def toggle_queue(self):
         try:

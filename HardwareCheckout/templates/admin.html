@@ -8,6 +8,40 @@
       </div>
     {% end %}
     <div class="content">
+      <div class="section-header">Enable/Disable Queues</div>
+      {% if queues %}
+      <table class="queue-table">
+        <thead class="queue-table--row">
+          <tr>
+            <td>Queue name</td>
+            <td>Enabled?</td>
+            <td># of users in queue</td>
+            <td></td>
+          </tr>
+        </thead>
+        <tbody>
+        {% for queue in queues %}
+          <tr class="form-section queue-table--row">
+            <td>{{queue.name}}</td>
+            <td>{{queue.enabled}}</td>
+            <td>
+                {{queue[2]}}
+            </td>
+            <td>
+              <form method="POST" action="/admin">
+                  <input hidden type="text" name="queue" value={{queue.id}}>
+                  <input hidden name="type" value="toggleQueue">
+                  <button class="button is-block is-fullwidth">Toggle Queue</button>
+              </form>
+            </td>
+          </tr>
+        {% end %}
+      </tbody>
+      </table>
+      {% end %}
+    </div>
+    <div class="breaker-line"></div>
+    <div class="content">
       <div class="section-header">Add Device Type</div>
       <div class="form-section">
         <form method="POST" action="/admin">
