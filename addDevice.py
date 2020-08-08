@@ -8,13 +8,14 @@ from werkzeug.security import generate_password_hash
 from argparse import ArgumentParser
 import os
 import configparser
+import sys
 
 
 parser = ArgumentParser()
 parser.add_argument('-u', '--username', help="Device user name", required=False)
 parser.add_argument('-p','--password',  help="Device user password", required=False)
 parser.add_argument('-t', '--type', help="Device type", required=False)
-parser.add_argument('-i', '--ini', help='Ini file containing list of users', required=False)
+parser.add_argument('-i', '--ini', help='Ini file containing list of device users', required=False)
 args = parser.parse_args()
 # parser.add_argument("Roles", nargs='+')
 
@@ -68,11 +69,13 @@ def csvParse(csvPath):
                 components = user.split(",")
                 if len(components) < 2:
                     print("Parameter missing in line {}".format(user))
+                    parser.print_help(sys.stderr)
                     exit(1)
                 else:
                     result.append(components)
         except:
             print("Couldn't read {}, {}".format(args.ini))
+            parser.print_help(sys.stderr)
             exit(1)
             
     return result
@@ -88,13 +91,17 @@ def printHelp():
 def main():
     if args.ini and (args.username or args.password) and not args.type:
         print ("You cannot define username, password, but must define device type when you define a ini file!!")
+        parser.print_help(sys.stderr)
     elif args.username and args.password and args.type:
         deviceAdd(args.username,args.password,args.type)
     else:
         if not args.ini or not args.type:
+            parser.print_help(sys.stderr)
+            print("")
             printHelp()
         if not os.path.isfile(args.ini):
             print ("Ini file {} doesn't exist!".format(args.ini))
+            parser.print_help(sys.stderr)
             exit(1)
         # for parsing csv files replace this with
         # csvParse(csvPath) --> Note that csvParse expects device type in the file

@@ -18,7 +18,7 @@ if test -z "$CTF_MODE"; then
 fi
 
 UNAMES=""
-for i in $(seq ${NUM_SESSIONS}); do
+for i in $( seq 0 $((${NUM_SESSIONS} - 1)) ); do
     UNAMES="${UNAMES} villager-device$i "
 done
 
@@ -55,7 +55,9 @@ prep_user() {
     sudo adduser --disabled-password --gecos "" $UNAME --shell /bin/bash
     sudo usermod -a -G dialout $UNAME
 
-    if grep -vq '617-440-8667' /home/$UNAME/.bashrc; then
+    sudo chattr -R -i /home/$UNAME
+
+    if ! grep -q '617-440-8667' /home/$UNAME/.bashrc; then
         cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 
 
@@ -90,15 +92,13 @@ EOF
     sudo -u $UNAME install -m 644 $SCRIPTPATH/.tmate.conf /home/$UNAME/.tmate.conf
 
     if ! grep -q "unset AUTH" /home/$UNAME/.bashrc; then
-    sudo chattr -i /home/$UNAME/.bashrc
     echo -e "\nunset AUTH\n" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
     fi
 
     if ${CTF_MODE} && ! grep -q "rm -rf" /home/$UNAME/.bashrc; then
-        sudo chattr -i /home/$UNAME/.bashrc
         echo -e "rm -rf ~/.* ~/* 2>/dev/null\n$(cat /home/$UNAME/.bashrc)" | sudo -u $UNAME tee /home/$UNAME/.bashrc > /dev/null
 
-	if grep -qv "CTF" ~/home/$UNAME/.bashrc; then
+	if grep -qv "CTF" /home/$UNAME/.bashrc; then
             cat <<"EOF" | sudo -u $UNAME tee -a /home/$UNAME/.bashrc > /dev/null
 echo "
     This is a CTF system.
@@ -111,12 +111,14 @@ EOF
 	fi
     fi
 
+    #Make both interactive and non-interactive shells use the same init in .bashrc prepared above
+    echo "source /home/$UNAME/.bashrc" | sudo -u $UNAME tee /home/$UNAME/.bash_profile > /dev/null
+
     #Make dead files so villagers can't get code exec on later villagers
-    sudo -u $UNAME touch /home/$UNAME/.dircolors
-    sudo -u $UNAME touch /home/$UNAME/.bash_aliases
-    sudo -u $UNAME touch /home/$UNAME/.bash_profile
-    sudo -u $UNAME touch /home/$UNAME/.bash_login
-    sudo -u $UNAME touch /home/$UNAME/.viminfo
+    echo | sudo -u $UNAME tee /home/$UNAME/.dircolors >/dev/null
+    echo | sudo -u $UNAME tee /home/$UNAME/.bash_aliases >/dev/null
+    echo | sudo -u $UNAME tee /home/$UNAME/.bash_login >/dev/null
+    echo | sudo -u $UNAME tee /home/$UNAME/.viminfo >/dev/null
 
     # Lock down the home dir, make everything immutable
     sudo chattr +i /home/$UNAME/.* /home/$UNAME/*
@@ -134,6 +136,10 @@ if [ -f $SCRIPTPATH/.tmate.conf.bak ]; then
     mv $SCRIPTPATH/.tmate.conf.bak $SCRIPTPATH/.tmate.conf
 fi
 sed -i.bak "s|localhost:8000|$1|g" $SCRIPTPATH/.tmate.conf
+if [ -f $SCRIPTPATH/session.target.bak ]; then
+    mv $SCRIPTPATH/session.target.bak  $SCRIPTPATH/session.target
+fi
+sed -i.bak "s/controller.service/controller.service $(echo $(for i in $(seq 0 $((NUM_SESSIONS-1))); do echo session@device$i.service; done))/" $SCRIPTPATH/session.target
 
 for name in $UNAMES; do
     prep_user $name
@@ -174,6 +180,7 @@ sudo $SCRIPTPATH/create_config.py $2 "${NUM_SESSIONS}"
 sudo install -m 755 $SCRIPTPATH/controller.py $APP_PATH/
 
 if [[ "${INIT}" == "systemd" ]]; then
+    #TODO: generate contents of session@.service based on NUM_SESSIONS
     sudo install -m 644 $SCRIPTPATH/{session.target,session@.service,controller.service} /etc/systemd/system/ || die "couldn't install systemd stuff"
     sudo systemctl daemon-reload || die "couldn't daemon-reload"
     sudo systemctl start session.target || die "couldn't start session.target"

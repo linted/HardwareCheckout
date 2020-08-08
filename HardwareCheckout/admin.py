@@ -61,6 +61,7 @@ class AdminHandler(UserBaseHandler):
  
         return self.render("admin.html", queues=queues, messages=errors)
 
+
     async def addDeviceType(self):
         try:
             name = self.get_argument("name")
@@ -181,7 +182,8 @@ class AdminHandler(UserBaseHandler):
                 deviceID = await as_future(session.query(DeviceQueue.id).filter_by(name=deviceName).one)
             except Exception:
                 return "Error while looking up device"
-        DeviceStateHandler.killSession(deviceID)
+
+        await DeviceStateHandler.killSession(deviceID[0])
 
     async def toggle_queue(self):
         try:
@@ -194,5 +196,6 @@ class AdminHandler(UserBaseHandler):
                 queue = await as_future(session.query(DeviceType).filter_by(id=queueID).one)
             except Exception:
                 return "Failed to find that queue type"
-
+            
             queue.enabled = 1 if not queue.enabled else 0
+            
