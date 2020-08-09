@@ -17,7 +17,8 @@ class ROTerminalHandler(UserBaseHandler):
             results = await as_future(
                 session.query(User.name, DeviceQueue.roUrl)
                 .join(User.deviceQueueEntry)
-                .filter_by(state="in-use")
+                .filter(DeviceQueue.state="in-use")
+                .filter(User.ctf=0)
                 .all
             )
         self.write({"urls": results})
