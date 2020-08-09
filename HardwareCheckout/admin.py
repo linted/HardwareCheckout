@@ -159,13 +159,13 @@ class AdminHandler(UserBaseHandler):
     async def rmDevice(self):
         # TODO: is this safe to do? what are the implications if someone is connected?
         try:
-            username = self.get_argument("username")
+            device = self.get_argument("device")
         except MissingArgumentError:
-            return "Missing username"
+            return "Missing device"
 
         with self.make_session() as session:
             try:
-                device = await as_future(session.query(DeviceQueue).filter_by(name=username).one)
+                device = await as_future(session.query(DeviceQueue).filter_by(name=device).one)
                 await as_future(partial(session.delete,device))
             except Exception:
                 return "Failed to remove device"
