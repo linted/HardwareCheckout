@@ -132,9 +132,9 @@
             {% end %}
         </div>
 
-        {% for term in terminals %}
-        <div id="{{term[0]}}" class="tabcontent">
-            <iframe  id="{{ term[0] }}-frame" src="{{term[1]}}" style="height:400px;width:100%;"></iframe>
+        {% for count in range(len(terminals)) %}
+        <div id="{{terminals[count][0]}}" class="tabcontent">
+        <iframe  id="{{ terminals[count][0] }}-frame" src="{{terminals[count][1]}}" style="height:400px;width:100%;{% if count != 0 %}display: none{% end %}"></iframe>
         </div>
         {% end %}
     </div>
