@@ -21,9 +21,9 @@ class User(db.Model):
 
     __tablename__ = "user"
     id = Column(Integer, primary_key=True)
-    password = Column(String(93), unique=True)
+    password = Column(String(93))
     ctf = Column(Integer)
-    name = Column(String(1000))
+    name = Column(String(1000), unique=True)
 
     # relationships
     roles = relationship("Role", secondary="user_roles")
