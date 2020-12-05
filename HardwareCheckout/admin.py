@@ -13,18 +13,30 @@ from .device import DeviceStateHandler
 
 admin = Blueprint()
 
-@admin.route('/', name="admin")
+
+@admin.route("/", name="admin")
 class AdminHandler(UserBaseHandler):
     @authenticated
     async def get(self):
         with self.make_session() as session:
             try:
-                queues = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId), DeviceType.enabled).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
+                queues = await as_future(
+                    session.query(
+                        DeviceType.id,
+                        DeviceType.name,
+                        func.count(UserQueue.userId),
+                        DeviceType.enabled,
+                    )
+                    .select_from(DeviceType)
+                    .join(UserQueue, isouter=True)
+                    .group_by(DeviceType.id, DeviceType.name)
+                    .all
+                )
             except Exception as e:
                 # todo render an error page
                 return "Error while finding queues"
 
-        self.render('admin.html', queues=queues, messages=None)
+        self.render("admin.html", queues=queues, messages=None)
 
     @authenticated
     async def post(self):
@@ -53,14 +65,24 @@ class AdminHandler(UserBaseHandler):
         # update queues
         with self.make_session() as session:
             try:
-                queues = await as_future(session.query(DeviceType.id, DeviceType.name, func.count(UserQueue.userId), DeviceType.enabled).select_from(DeviceType).join(UserQueue, isouter=True).group_by(DeviceType.id, DeviceType.name).all)
+                queues = await as_future(
+                    session.query(
+                        DeviceType.id,
+                        DeviceType.name,
+                        func.count(UserQueue.userId),
+                        DeviceType.enabled,
+                    )
+                    .select_from(DeviceType)
+                    .join(UserQueue, isouter=True)
+                    .group_by(DeviceType.id, DeviceType.name)
+                    .all
+                )
                 print("queues", queues)
             except Exception as e:
                 # todo render an error page
                 return "Error while finding queues"
- 
-        return self.render("admin.html", queues=queues, messages=errors)
 
+        return self.render("admin.html", queues=queues, messages=errors)
 
     async def addDeviceType(self):
         try:
@@ -68,8 +90,8 @@ class AdminHandler(UserBaseHandler):
         except MissingArgumentError:
             return "Missing device type"
         with self.make_session() as session:
-            await as_future(partial(session.add,DeviceType(name=name, enabled=1)))
-        return ''
+            await as_future(partial(session.add, DeviceType(name=name, enabled=1)))
+        return ""
 
     async def addDevice(self):
         try:
@@ -84,25 +106,26 @@ class AdminHandler(UserBaseHandler):
         except KeyError:
             return "Error while trying to read the config file"
 
-        error_msg = ''
+        error_msg = ""
         with self.make_session() as session:
-            device_type_id = await as_future(session.query(DeviceType.id).filter_by(name=device_type).one)
+            device_type_id = await as_future(
+                session.query(DeviceType.id).filter_by(name=device_type).one
+            )
 
             for section in config.sections():
                 try:
                     session.add(
                         DeviceQueue(
-                            name=config[section]['username'],
+                            name=config[section]["username"],
                             password=generate_password_hash(
-                                config[section]["password"],
-                                method=PASSWORD_CRYPTO_TYPE
+                                config[section]["password"], method=PASSWORD_CRYPTO_TYPE
                             ),
                             state="want-provision",
-                            type=device_type_id
+                            type=device_type_id,
                         )
                     )
                 except Exception as e:
-                    error_msg += str(e) + '\n'
+                    error_msg += str(e) + "\n"
                     continue
 
         return error_msg
@@ -116,9 +139,15 @@ class AdminHandler(UserBaseHandler):
 
         with self.make_session() as session:
             try:
-                admin = await as_future(session.query(Role).filter_by(name="Admin").first)
-                human = await as_future(session.query(Role).filter_by(name="Human").first)
-                device = await as_future(session.query(Role).filter_by(name="Device").first)
+                admin = await as_future(
+                    session.query(Role).filter_by(name="Admin").first
+                )
+                human = await as_future(
+                    session.query(Role).filter_by(name="Human").first
+                )
+                device = await as_future(
+                    session.query(Role).filter_by(name="Device").first
+                )
             except Exception:
                 return "Error while finding roles"
 
@@ -129,11 +158,10 @@ class AdminHandler(UserBaseHandler):
                         User(
                             name=username,
                             password=generate_password_hash(
-                                password,
-                                method=PASSWORD_CRYPTO_TYPE
+                                password, method=PASSWORD_CRYPTO_TYPE
                             ),
-                            roles=[admin, human, device]
-                        )
+                            roles=[admin, human, device],
+                        ),
                     )
                 )
             except Exception:
@@ -149,8 +177,12 @@ class AdminHandler(UserBaseHandler):
 
         with self.make_session() as session:
             try:
-                device = await as_future(session.query(DeviceQueue).filter_by(name=username).one)
-                device.password = generate_password_hash(password, method=PASSWORD_CRYPTO_TYPE)
+                device = await as_future(
+                    session.query(DeviceQueue).filter_by(name=username).one
+                )
+                device.password = generate_password_hash(
+                    password, method=PASSWORD_CRYPTO_TYPE
+                )
             except Exception:
                 return "Error while updating password"
 
@@ -165,8 +197,10 @@ class AdminHandler(UserBaseHandler):
 
         with self.make_session() as session:
             try:
-                device = await as_future(session.query(DeviceQueue).filter_by(name=device).one)
-                await as_future(partial(session.delete,device))
+                device = await as_future(
+                    session.query(DeviceQueue).filter_by(name=device).one
+                )
+                await as_future(partial(session.delete, device))
             except Exception:
                 return "Failed to remove device"
         return ""
@@ -179,7 +213,9 @@ class AdminHandler(UserBaseHandler):
 
         with self.make_session() as session:
             try:
-                deviceID = await as_future(session.query(DeviceQueue.id).filter_by(name=deviceName).one)
+                deviceID = await as_future(
+                    session.query(DeviceQueue.id).filter_by(name=deviceName).one
+                )
             except Exception:
                 return "Error while looking up device"
 
@@ -193,9 +229,10 @@ class AdminHandler(UserBaseHandler):
 
         with self.make_session() as session:
             try:
-                queue = await as_future(session.query(DeviceType).filter_by(id=queueID).one)
+                queue = await as_future(
+                    session.query(DeviceType).filter_by(id=queueID).one
+                )
             except Exception:
                 return "Failed to find that queue type"
-            
+
             queue.enabled = 1 if not queue.enabled else 0
-            

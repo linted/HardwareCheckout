@@ -172,11 +172,12 @@ class DeviceStateHandler(UserBaseHandler):
                     deviceID, next_user.userId
                 )
 
-
     @staticmethod
     async def device_in_queue(deviceID, next_user):
         with make_session() as session:
-            device = await as_future(session.query(DeviceQueue).filter_by(id=deviceID).first)
+            device = await as_future(
+                session.query(DeviceQueue).filter_by(id=deviceID).first
+            )
             device.state = "in-queue"  # Set this to in queue so the callback doesn't try to hand it out again
             device.owner = next_user
             session.add(device)
@@ -213,7 +214,6 @@ class DeviceStateHandler(UserBaseHandler):
                 session.query(DeviceQueue.owner).filter_by(id=deviceID).one
             )
         on_user_deallocated_device(userID, deviceID, reason)
-        
 
     @staticmethod
     async def device_in_use(deviceID):
@@ -304,9 +304,13 @@ class ControllerHandler(DeviceWSHandler):
     @classmethod
     async def restart_device(cls, device):
         with make_session() as session:
-            deviceName = await as_future(session.query(DeviceQueue.name).filter_by(id=device).one)
+            deviceName = await as_future(
+                session.query(DeviceQueue.name).filter_by(id=device).one
+            )
         try:
-            await cls.__listeners[deviceName[0]].write_message({"type":"restart", "params":deviceName[0]})
+            await cls.__listeners[deviceName[0]].write_message(
+                {"type": "restart", "params": deviceName[0]}
+            )
         except Exception:
             return False
         return True

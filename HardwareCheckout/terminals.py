@@ -17,8 +17,8 @@ class ROTerminalHandler(UserBaseHandler):
             results = await as_future(
                 session.query(User.name, DeviceQueue.roUrl)
                 .join(User.deviceQueueEntry)
-                .filter(DeviceQueue.state=="in-use")
-                .filter(User.ctf==0)
+                .filter(DeviceQueue.state == "in-use")
+                .filter(User.ctf == 0)
                 .all
             )
         self.write({"urls": results})
@@ -29,7 +29,9 @@ class RWTerminalHandler(UserBaseHandler):
     @authenticated
     async def get(self):
         with self.make_session() as session:
-            current_user = await as_future(session.query(User).filter_by(id=self.current_user).one)
+            current_user = await as_future(
+                session.query(User).filter_by(id=self.current_user).one
+            )
 
             if not current_user.has_roles("Admin"):
                 self.redirect(self.reverse_url("ROTerminals"))
@@ -44,4 +46,3 @@ class RWTerminalHandler(UserBaseHandler):
                 ).all
             )
         self.write({"urls": results})
-

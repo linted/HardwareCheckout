@@ -7,12 +7,16 @@ from .config import db_path
 from tornado_sqlalchemy import SQLAlchemy, as_future
 from functools import partial
 
-db = SQLAlchemy(url=db_path, engine_options={
-    "max_overflow": 15,
-    "pool_pre_ping": True,
-    "pool_recycle": 60 * 60,
-    "pool_size": 30,
-})
+db = SQLAlchemy(
+    url=db_path,
+    engine_options={
+        "max_overflow": 15,
+        "pool_pre_ping": True,
+        "pool_recycle": 60 * 60,
+        "pool_size": 30,
+    },
+)
+
 
 class User(db.Model):
     """
@@ -31,13 +35,15 @@ class User(db.Model):
     deviceQueueEntry = relationship("DeviceQueue", foreign_keys="DeviceQueue.owner")
 
     def get_owned_devices(self, session):
-        return session.query(
-            DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl, DeviceQueue.id
-        ).join(
-            DeviceType
-        ).filter(
-            or_(DeviceQueue.state == "in-queue", DeviceQueue.state == "in-use"),
-            DeviceQueue.owner == self.id,
+        return (
+            session.query(
+                DeviceType.name, DeviceQueue.sshAddr, DeviceQueue.webUrl, DeviceQueue.id
+            )
+            .join(DeviceType)
+            .filter(
+                or_(DeviceQueue.state == "in-queue", DeviceQueue.state == "in-use"),
+                DeviceQueue.owner == self.id,
+            )
         )
 
     def get_owned_devices_async(self, session):

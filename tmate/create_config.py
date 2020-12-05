@@ -10,8 +10,10 @@ parser.add_argument("prefix", help="device name prefix")
 parser.add_argument("count", type=int)
 args = parser.parse_args()
 
+
 def gen_password():
     return uuid4()
+
 
 config = configparser.ConfigParser()
 for i in range(args.count):
@@ -19,12 +21,13 @@ for i in range(args.count):
     username = "{}-{}".format(args.prefix, name)
     password = gen_password()
     path = "/root/device{}".format(i)
-    config[name]={
-        "username":username,
-        "password":password
-    }
-    with open(path, 'w') as fout:
-        fout.write("AUTH={}\n".format(b64encode("{}={}".format(username, password).encode()).decode()))
+    config[name] = {"username": username, "password": password}
+    with open(path, "w") as fout:
+        fout.write(
+            "AUTH={}\n".format(
+                b64encode("{}={}".format(username, password).encode()).decode()
+            )
+        )
     chmod(path, 0o600)
 
 config["controller"] = {

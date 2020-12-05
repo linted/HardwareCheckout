@@ -9,7 +9,8 @@ from .webutil import Blueprint, UserBaseHandler
 
 auth = Blueprint()
 
-PASSWORD_CRYPTO_TYPE="pbkdf2:sha256:45000"
+PASSWORD_CRYPTO_TYPE = "pbkdf2:sha256:45000"
+
 
 @auth.route("/login", name="login")
 class LoginHandler(UserBaseHandler):
@@ -33,7 +34,9 @@ class LoginHandler(UserBaseHandler):
         # Do a user lookup for the provided username
         try:
             with self.make_session() as session:
-                userId, userPass = await as_future(session.query(User.id, User.password).filter_by(name=name).first)
+                userId, userPass = await as_future(
+                    session.query(User.id, User.password).filter_by(name=name).first
+                )
         except Exception:
             return self.render("login.html", messages="Invalid username or password")
 
