@@ -15,25 +15,24 @@ from .models import db
 
 # init SQLAlchemy so we can use it later in our models
 
+
 class NotFoundHandler(RequestHandler):
     def get(self):
         self.set_status(404)
         self.render("error.html", error="404")
-        
+
 
 def create_redirect():
     class sslRedirect(RequestHandler):
         def get(self):
-            self.redirect('https://' + self.request.host, permanent=True)
-        def post(self):
-            self.redirect('https://' + self.request.host, permanent=True)
+            self.redirect("https://" + self.request.host, permanent=True)
 
-    app = Application(
-        [
-            (r'/.*', sslRedirect)
-        ]
-    )
+        def post(self):
+            self.redirect("https://" + self.request.host, permanent=True)
+
+    app = Application([(r"/.*", sslRedirect)])
     return app
+
 
 def create_app():
     """
@@ -42,22 +41,30 @@ def create_app():
     """
     app = Application(
         [
-            *(main_blueprint.publish('/')),
-            *(auth_blueprint.publish('/')),
-            *(terminal_blueprint.publish('/')),
-            *(queue_blueprint.publish('/queue')),
-            *(device_blueprint.publish('/device')),
+            *(main_blueprint.publish("/")),
+            *(auth_blueprint.publish("/")),
+            *(terminal_blueprint.publish("/")),
+            *(queue_blueprint.publish("/queue")),
+            *(device_blueprint.publish("/device")),
             *(admin_blueprint.publish("/admin")),
         ],
         login_url="/login",
-        cookie_secret=os.environ.get('TORNADO_SECRET_KEY', open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../cookie.key"),'r').read()),
+        cookie_secret=os.environ.get(
+            "TORNADO_SECRET_KEY",
+            open(
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)), "../cookie.key"
+                ),
+                "r",
+            ).read(),
+        ),
         template_path="HardwareCheckout/templates/",
         static_path="HardwareCheckout/static/",
         db=db,
         # xsrf_cookies=True,  #TODO
         websocket_ping_interval=10000,
         websocket_ping_timeout=30000,
-        default_handler_class=NotFoundHandler
+        default_handler_class=NotFoundHandler,
     )
 
     return app

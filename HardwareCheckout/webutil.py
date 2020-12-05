@@ -16,11 +16,11 @@ from .models import DeviceQueue, User, db
 
 class UserBaseHandler(SessionMixin, RequestHandler):
     def get_current_user(self):
-        '''
+        """
         Not allowed to be async
-        '''
+        """
         try:
-            user_cookie = int(self.get_secure_cookie('user', max_age_days=2))
+            user_cookie = int(self.get_secure_cookie("user", max_age_days=2))
             return user_cookie
         except Exception:
             return False
@@ -28,14 +28,18 @@ class UserBaseHandler(SessionMixin, RequestHandler):
 
 class DeviceBaseHandler(SessionMixin, RequestHandler):
     def get_current_user(self):
-        '''
+        """
         Not allowed to be async
-        '''
-        if 'Authorization' not in self.request.headers:
+        """
+        if "Authorization" not in self.request.headers:
             return self.unauthorized()
-        if not self.request.headers['Authorization'].startswith('Basic '):
+        if not self.request.headers["Authorization"].startswith("Basic "):
             return self.unauthorized()
-        name, password = b64decode(self.request.headers['Authorization'][6:]).decode().split(':', 1)
+
+        name, password = (
+            b64decode(self.request.headers["Authorization"][6:]).decode().split(":", 1)
+        )
+
         try:
             device = DeviceQueue.query.filter_by(name=name).one()
             if not check_password_hash(device.password, password):
@@ -45,30 +49,39 @@ class DeviceBaseHandler(SessionMixin, RequestHandler):
             return self.unauthorized()
 
     def unauthorized(self):
-        '''
+        """
         Not allowed to be async, used by get_current_user
-        '''
-        self.set_header('WWW-Authenticate', 'Basic realm="CarHackingVillage"')
+        """
+        self.set_header("WWW-Authenticate", 'Basic realm="CarHackingVillage"')
         self.set_status(401)
         return False
 
 
 class DeviceWSHandler(SessionMixin, WebSocketHandler):
     async def check_authentication(self):
-        if 'Authorization' not in self.request.headers:
+        if "Authorization" not in self.request.headers:
             return False
-        if not self.request.headers['Authorization'].startswith('Basic '):
+        if not self.request.headers["Authorization"].startswith("Basic "):
             return False
-        name, password = b64decode(self.request.headers['Authorization'][6:]).decode().split(':', 1)
+
+        name, password = (
+            b64decode(self.request.headers["Authorization"][6:]).decode().split(":", 1)
+        )
+
         try:
             with self.make_session() as session:
-                deviceID, devicePassword = await as_future(session.query(DeviceQueue.id, DeviceQueue.password).filter_by(name=name).one)
+                deviceID, devicePassword = await as_future(
+                    session.query(DeviceQueue.id, DeviceQueue.password)
+                    .filter_by(name=name)
+                    .one
+                )
+
             if not check_password_hash(devicePassword, password):
                 return False
+                
             return deviceID
         except NoResultFound:
             return False
-
 
 
 class Blueprint:
@@ -77,21 +90,23 @@ class Blueprint:
 
     def route(self, path, kwargs=None, name=None):
         def decorator(cls):
-            self.routes.append({
-                'pattern': [part for part in path.split('/') if part],
-                'handler': cls,
-                'kwargs': kwargs,
-                'name': name
-            })
+            self.routes.append(
+                {
+                    "pattern": [part for part in path.split("/") if part],
+                    "handler": cls,
+                    "kwargs": kwargs,
+                    "name": name,
+                }
+            )
             return cls
 
         return decorator
 
     def publish(self, base):
         finalRoutes = []
-        base = [part for part in base.split('/') if part]
+        base = [part for part in base.split("/") if part]
         for route in self.routes:
-            route['pattern'] = '/' + '/'.join(base + route['pattern'])
+            route["pattern"] = "/" + "/".join(base + route["pattern"])
             finalRoutes.append(URLSpec(**route))
         return finalRoutes
 
@@ -106,9 +121,9 @@ class Waiters:
         return self.waiters[id]
 
     def broadcast(self, message):
-        '''
+        """
         Not async. Send returns a future, just ignore it.
-        '''
+        """
         for bucket in self.waiters.values():
             bucket.send(message)
 
@@ -129,7 +144,7 @@ class WaiterBucket:
             waiter.send(message)
 
 
-class Timer():
+class Timer:
     __instance = None
     __timer = None
     __callback = None
@@ -144,10 +159,14 @@ class Timer():
         self.__args = args if args else list()
         self.__kwargs = kwargs if kwargs else dict()
         if self.__repeat:
-            self.__timer = PeriodicCallback(self.__callback_wrapper, self.__timeout * 1000)
+            self.__timer = PeriodicCallback(
+                self.__callback_wrapper, self.__timeout * 1000
+            )
             self.__timer.start()
         else:
-            self.__timer = IOLoop.current().call_later(self.__timeout, self.__callback_wrapper)
+            self.__timer = IOLoop.current().call_later(
+                self.__timeout, self.__callback_wrapper
+            )
 
     def restart(self):
         if self.__timer is not None:
