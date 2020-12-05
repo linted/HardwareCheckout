@@ -8,7 +8,9 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-c", "--clean", help="remove existing database if it exists", action="store_true")
+parser.add_argument(
+    "-c", "--clean", help="remove existing database if it exists", action="store_true"
+)
 args = parser.parse_args()
 
 if args.clean:

@@ -7,8 +7,8 @@ from werkzeug.security import generate_password_hash
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
-parser.add_argument("-u","--username", help="Admin user name", required=True)
-parser.add_argument("-p","--password", help="Admin user password", required=True)
+parser.add_argument("-u", "--username", help="Admin user name", required=True)
+parser.add_argument("-p", "--password", help="Admin user password", required=True)
 args = parser.parse_args()
 # parser.add_argument("Roles", nargs='+')
 
@@ -21,12 +21,9 @@ device = s.query(Role).filter_by(name="Device").first()
 
 s.add(
     User(
-        name=args.username, 
-        password=generate_password_hash(
-            args.password, 
-            method="pbkdf2:sha256:45000"
-        ),
-        roles=[admin, human, device]
+        name=args.username,
+        password=generate_password_hash(args.password, method="pbkdf2:sha256:45000"),
+        roles=[admin, human, device],
     )
 )
 s.commit()

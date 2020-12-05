@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 import argparse
 
 parser = ArgumentParser()
-parser.add_argument('-n', '--name', help="Stream name to delete", required=True)
+parser.add_argument("-n", "--name", help="Stream name to delete", required=True)
 args = parser.parse_args()
 
 session = sessionmaker(bind=create_engine(db_path))
