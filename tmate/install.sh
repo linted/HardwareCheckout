@@ -25,23 +25,24 @@ done
 HOSTNAME="$(hostname)"
 APP_PATH=/opt/hc-client
 TMATEURL=https://github.com/tmate-io/tmate/releases/download/2.4.0/
-TMATE64=tmate-2.4.0-static-linux-arm64v8.tar.xz
-TMATE32=tmate-2.4.0-static-linux-arm32v7.tar.xz
-TMATEARMHF=tmate-2.4.0-static-linux-arm32v6.tar.xz
+TMATE_ARM_64=tmate-2.4.0-static-linux-arm64v8.tar.xz
+TMATE_ARM_32=tmate-2.4.0-static-linux-arm32v7.tar.xz
+TMATE_ARMHF=tmate-2.4.0-static-linux-arm32v6.tar.xz
+TMATE_AMD64=tmate-2.4.0-static-linux-amd64.tar.xz
+TMATE_i386=tmate-2.4.0-static-linux-i386.tar.xz
 
-architecture=""
+TMATE=""
 case $(uname -m) in
-    i386)   architecture="386" ;;
-    i686)   architecture="386" ;;
-    x86_64) architecture="amd64" ;;
-    arm|armv6l)    architecture="armhf" ;;
-    arm|armv7l)    dpkg --print-architecture | grep -q "arm64" && architecture="arm64" || architecture="arm" ;;
+    i386)   TMATE=$TMATE_i386 ;;
+    i686)   TMATE=$TMATE_i386 ;;
+    x86_64) TMATE=$TMATE_AMD64 ;;
+    arm|armv6l)    TMATE=$TMATEARMHF ;;
+    arm|armv7l)    dpkg --print-architecture | grep -q "arm64" && TMATE=$TMATE64 || TMATE=$TMATE32 ;;
 esac
 
-
-if [ "${architecture}" != "arm" ] && [ "${architecture}" != "armhf" ]; then
-echo "This is not an arm chipset... Bye bye!"
-exit 1
+if [ -z $TMATE ]; then
+    echo "Unable to determine architecture!"
+    exit 1
 fi
 
 if [[ $# -ne 2 ]]; then
@@ -152,14 +153,6 @@ fi
 
 if ! which pip3; then
     sudo apt-get install -y python3-pip
-fi
-
-if [[ "${architecture}" == "arm64" ]]; then
-TMATE=$TMATE64
-elif [[ "${architecture}" == "armhf" ]]; then
-TMATE=$TMATEARMHF
-else
-TMATE=$TMATE32
 fi
 
 wget $TMATEURL$TMATE 1>/dev/null
