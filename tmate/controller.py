@@ -42,11 +42,6 @@ class Client(object):
             PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
             IOLoop.current().add_callback(self.recv_loop)
 
-            for files in os.listdir("/tmp/devices"):
-                full_path = os.path.join("/tmp/devices", files)
-                if os.path.isdir(full_path):
-                    await register_device(full_path, self, self.profiles)
-
         except Exception:
             print("connection error")
             self.ws = None
@@ -114,9 +109,9 @@ class New_Device_Handler(pyinotify.ProcessEvent):
         self.client = client
         self.profiles = profiles
 
-    def handle_create_event(self, event):
+    async def handle_create_event(self, event):
         print("New Device Created")
-        register_device(event.pathname, self.client, self.profiles)
+        await register_device(event.pathname, self.client, self.profiles)
 
 
 def get_profiles():
@@ -155,6 +150,11 @@ async def watch_directories(directories, handler):
     with Inotify() as inotify:
         for dirs in directories:
             inotify.add_watch(dirs, Mask.CREATE)
+
+            for files in os.listdir(dirs):
+                full_path = os.path.join(dirs, files)
+                if os.path.isdir(full_path):
+                    await handler.handle_create_event(full_path)
 
         async for event in inotify:
             handler.handle_create_event(event.path)
