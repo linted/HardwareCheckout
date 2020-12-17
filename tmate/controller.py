@@ -104,14 +104,14 @@ class Client(object):
         self.ws.write_message(json_encode({'type':"register", "params":device}))
 
 
-class New_Device_Handler(pyinotify.ProcessEvent):
-    def my_init(self, client, profiles={}):
+class New_Device_Handler():
+    def __init__(self, client, profiles={}):
         self.client = client
         self.profiles = profiles
 
-    async def handle_create_event(self, event):
+    async def handle_create_event(self, pathname):
         print("New Device Created")
-        await register_device(event.pathname, self.client, self.profiles)
+        await register_device(pathname, self.client, self.profiles)
 
 
 def get_profiles():
@@ -157,7 +157,7 @@ async def watch_directories(directories, handler):
                     await handler.handle_create_event(full_path)
 
         async for event in inotify:
-            handler.handle_create_event(event.path)
+            await handler.handle_create_event(str(event.path))
 
 
 async def main():
