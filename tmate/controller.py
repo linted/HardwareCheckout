@@ -16,10 +16,11 @@ from tornado.process import Subprocess as subprocess
 ACTIVE_CLIENTS = {}
 device_re = re.compile(r"^.*(device\d+)$")
 
+
 class Client(object):
     devices = {}
 
-    def __init__(self, url, username, password, profiles, timeout = 300):
+    def __init__(self, url, username, password, profiles, timeout=300):
         self.url = url
         self.username = username
         self.password = password
@@ -36,7 +37,9 @@ class Client(object):
         print("trying to connect")
         try:
             self.ws = await websocket_connect(
-                HTTPRequest(url=self.url, headers=self.auth_header(self.username, self.password))
+                HTTPRequest(
+                    url=self.url, headers=self.auth_header(self.username, self.password)
+                )
             )
 
             PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
@@ -78,7 +81,7 @@ class Client(object):
 
         if not msg_type:
             return
-        elif msg_type == 'restart':
+        elif msg_type == "restart":
             print("Got restart request for {}".format(params))
             await self.kill(params)
 
@@ -89,10 +92,10 @@ class Client(object):
                 break
 
         p = subprocess(
-            ["pkill", "-u", "villager-" + deviceName], 
-            stdout = subprocess.STREAM, 
-            stderr = subprocess.STREAM
-            )
+            ["pkill", "-u", "villager-" + deviceName],
+            stdout=subprocess.STREAM,
+            stderr=subprocess.STREAM,
+        )
 
         try:
             await p.wait_for_exit()
@@ -101,10 +104,10 @@ class Client(object):
         return True
 
     async def register_device(self, device):
-        self.ws.write_message(json_encode({'type':"register", "params":device}))
+        self.ws.write_message(json_encode({"type": "register", "params": device}))
 
 
-class New_Device_Handler():
+class New_Device_Handler:
     def __init__(self, client, profiles={}):
         self.client = client
         self.profiles = profiles
@@ -142,9 +145,9 @@ async def register_device(path, client, profiles):
 
         clientProfile = profiles.get(profile_name, False)
         if clientProfile:
-            print("Registering new Client: {}".format(clientProfile['username']))
-            await client.register_device(clientProfile['username'])
-            
+            print("Registering new Client: {}".format(clientProfile["username"]))
+            await client.register_device(clientProfile["username"])
+
 
 async def watch_directories(directories, handler):
     with Inotify() as inotify:
@@ -163,13 +166,17 @@ async def watch_directories(directories, handler):
 async def main():
     profiles = get_profiles()
 
-    newClient = Client("wss://localhost:8080/device/controller", profiles['controller']["username"], profiles['controller']["password"], profiles)
+    newClient = Client(
+        "wss://localhost:8080/device/controller",
+        profiles["controller"]["username"],
+        profiles["controller"]["password"],
+        profiles,
+    )
     await newClient.connect()
 
     DeviceHandler = New_Device_Handler(client=newClient, profiles=profiles)
 
-    IOLoop.current().add_callback(watch_directories, ['/tmp/devices'], DeviceHandler)
-
+    IOLoop.current().add_callback(watch_directories, ["/tmp/devices"], DeviceHandler)
 
 
 if __name__ == "__main__":
