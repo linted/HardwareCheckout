@@ -2,12 +2,10 @@
 import os
 import re
 from configparser import ConfigParser
-import asyncore
 from base64 import b64encode
 
 from asyncinotify import Inotify, Mask
 from tornado.ioloop import IOLoop, PeriodicCallback
-from tornado import gen
 from tornado.websocket import websocket_connect
 from tornado.escape import json_decode, json_encode
 from tornado.httpclient import HTTPRequest
