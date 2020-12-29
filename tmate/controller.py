@@ -2,12 +2,10 @@
 import os
 import re
 from configparser import ConfigParser
-import asyncore
 from base64 import b64encode
 
-import pyinotify
+from asyncinotify import Inotify, Mask
 from tornado.ioloop import IOLoop, PeriodicCallback
-from tornado import gen
 from tornado.websocket import websocket_connect
 from tornado.escape import json_decode, json_encode
 from tornado.httpclient import HTTPRequest
@@ -44,11 +42,6 @@ class Client(object):
 
             PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
             IOLoop.current().add_callback(self.recv_loop)
-
-            for files in os.listdir("/tmp/devices"):
-                full_path = os.path.join("/tmp/devices", files)
-                if os.path.isdir(full_path):
-                    await register_device(full_path, self, self.profiles)
 
         except Exception:
             print("connection error")
@@ -112,14 +105,14 @@ class Client(object):
         self.ws.write_message(json_encode({"type": "register", "params": device}))
 
 
-class New_Device_Handler(pyinotify.ProcessEvent):
-    def my_init(self, client, profiles={}):
+class New_Device_Handler:
+    def __init__(self, client, profiles={}):
         self.client = client
         self.profiles = profiles
 
-    def process_IN_CREATE(self, event):
+    async def handle_create_event(self, pathname):
         print("New Device Created")
-        register_device(event.pathname, self.client, self.profiles)
+        await register_device(pathname, self.client, self.profiles)
 
 
 def get_profiles():
@@ -154,6 +147,20 @@ async def register_device(path, client, profiles):
             await client.register_device(clientProfile["username"])
 
 
+async def watch_directories(directories, handler):
+    with Inotify() as inotify:
+        for dirs in directories:
+            inotify.add_watch(dirs, Mask.CREATE)
+
+            for files in os.listdir(dirs):
+                full_path = os.path.join(dirs, files)
+                if os.path.isdir(full_path):
+                    await handler.handle_create_event(full_path)
+
+        async for event in inotify:
+            await handler.handle_create_event(str(event.path))
+
+
 async def main():
     profiles = get_profiles()
 
@@ -165,18 +172,9 @@ async def main():
     )
     await newClient.connect()
 
-    # Create the watch manager
-    watch_manager = pyinotify.WatchManager()
+    DeviceHandler = New_Device_Handler(client=newClient, profiles=profiles)
 
-    # TODO do we need event_notifier?
-    event_notifier = pyinotify.TornadoAsyncNotifier(
-        watch_manager,
-        IOLoop.current(),
-        New_Device_Handler(client=newClient, profiles=profiles),
-    )
-    watch_manager.add_watch("/tmp/devices", pyinotify.IN_CREATE)
-
-    # event_notifier.stop()
+    IOLoop.current().add_callback(watch_directories, ["/tmp/devices"], DeviceHandler)
 
 
 if __name__ == "__main__":

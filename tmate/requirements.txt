@@ -1,2 +1,2 @@
-tornado==6.0.4
-pyinotify==0.9.6
+asyncinotify==2.0.0
+tornado==6.1
