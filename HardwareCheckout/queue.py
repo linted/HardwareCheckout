@@ -8,15 +8,15 @@ from .webutil import Blueprint, Waiters, UserBaseHandler, Timer, make_session
 queue = Blueprint()
 
 
-def on_user_assigned_device(userId, device):
-    message = {"type": "queue_shrink", "queue": device.type}
+def on_user_assigned_device(userId:int, device_id:str, device_type:str, device_name:str, device_ssh:str, device_url:str):
+    message = {"type": "queue_shrink", "queue": device_type}
     QueueWSHandler.waiters.broadcast(message)
 
     device_info = {
-        "id": device.id,
-        "name": device.type_obj.name,
-        "sshAddr": device.sshAddr,
-        "webUrl": device.webUrl,
+        "id": device_id,
+        "name": device_name,
+        "sshAddr": device_ssh,
+        "webUrl": device_url,
     }
 
     message = {"type": "new_device", "device": device_info}
