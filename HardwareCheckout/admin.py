@@ -18,7 +18,7 @@ admin = Blueprint()
 
 @admin.route("/", name="admin")
 class AdminHandler(UserBaseHandler):
-        ADMIN_FUNCTIONS: Dict[str, Coroutine[None,None,str]]= {
+    ADMIN_FUNCTIONS: Dict[str, Coroutine[None,None,str]]= {
             "addDeviceType": self.addDeviceType,
             "addDevice": self.addDevice,
             "addAdmin":self.addAdmin,
