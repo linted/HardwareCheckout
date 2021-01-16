@@ -18,14 +18,16 @@ admin = Blueprint()
 
 @admin.route("/", name="admin")
 class AdminHandler(UserBaseHandler):
-    ADMIN_FUNCTIONS: Dict[str, Coroutine[None,None,str]]= {
+    def initialize(self, *args, **kwargs):
+        super().initialize(*args, **kwargs)
+        self.ADMIN_FUNCTIONS: Dict[str, Coroutine[None, None, str]] = {
             "addDeviceType": self.addDeviceType,
             "addDevice": self.addDevice,
-            "addAdmin":self.addAdmin,
-            "changeDevicePassword":self.changeDevicePassword,
-            "rmDevice":self.rmDevice,
-            "killSession":self.killSession,
-            "toggleQueue":self.toggle_queue,
+            "addAdmin": self.addAdmin,
+            "changeDevicePassword": self.changeDevicePassword,
+            "rmDevice": self.rmDevice,
+            "killSession": self.killSession,
+            "toggleQueue": self.toggle_queue,
         }
 
     @authenticated
@@ -59,11 +61,13 @@ class AdminHandler(UserBaseHandler):
         except MissingArgumentError:
             return self.render("admin.html", messages="Error in form submission")
 
-
-
-        errors = self.ADMIN_FUNCTIONS.get(req_type, (lambda : "Invalid function"))()
+        errors = self.ADMIN_FUNCTIONS.get(req_type, (lambda: "Invalid function"))()
         if errors:
-            print("Invalid Admin function by user {}: {}".format(self.current_user, req_type))
+            print(
+                "Invalid Admin function by user {}: {}".format(
+                    self.current_user, req_type
+                )
+            )
             return self.render("error.html", error=errors)
 
         # update queues
