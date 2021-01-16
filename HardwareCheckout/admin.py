@@ -61,14 +61,18 @@ class AdminHandler(UserBaseHandler):
         except MissingArgumentError:
             return self.render("admin.html", messages="Error in form submission")
 
-        errors = self.ADMIN_FUNCTIONS.get(req_type, (lambda: "Invalid function"))()
-        if errors:
-            print(
-                "Invalid Admin function by user {}: {}".format(
-                    self.current_user, req_type
+        try:
+            errors = self.ADMIN_FUNCTIONS.get(req_type, (lambda: "Invalid function"))()
+        except Exception as e:
+            errors = str(e)
+        finally:
+            if errors:
+                print(
+                    "Invalid Admin function by user {}: {}".format(
+                        self.current_user, req_type
+                    )
                 )
-            )
-            return self.render("error.html", error=errors)
+                return self.render("error.html", error=errors)
 
         # update queues
         with self.make_session() as session:
