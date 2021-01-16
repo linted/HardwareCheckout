@@ -1,6 +1,8 @@
 from configparser import ConfigParser
 from functools import partial
 from contextlib import contextmanager
+from typing import Optional, Awaitable, Dict, Coroutine
+
 from sqlalchemy import func
 from tornado.web import authenticated, MissingArgumentError, RequestHandler
 from werkzeug.security import generate_password_hash
@@ -16,6 +18,16 @@ admin = Blueprint()
 
 @admin.route("/", name="admin")
 class AdminHandler(UserBaseHandler):
+        ADMIN_FUNCTIONS: Dict[str, Coroutine[None,None,str]]= {
+            "addDeviceType": self.addDeviceType,
+            "addDevice": self.addDevice,
+            "addAdmin":self.addAdmin,
+            "changeDevicePassword":self.changeDevicePassword,
+            "rmDevice":self.rmDevice,
+            "killSession":self.killSession,
+            "toggleQueue":self.toggle_queue,
+        }
+
     @authenticated
     async def get(self):
         with self.make_session() as session:
@@ -34,9 +46,10 @@ class AdminHandler(UserBaseHandler):
                 )
             except Exception as e:
                 # todo render an error page
-                return "Error while finding queues"
+                print("Error while finding queues: {}".format(e))
+                return self.render("error.html", error="Query Error")
 
-        self.render("admin.html", queues=queues, messages=None)
+        return self.render("admin.html", queues=queues, messages=None)
 
     @authenticated
     async def post(self):
@@ -46,21 +59,12 @@ class AdminHandler(UserBaseHandler):
         except MissingArgumentError:
             return self.render("admin.html", messages="Error in form submission")
 
-        errors = ""
-        if req_type == "addDeviceType":
-            errors = await self.addDeviceType()
-        elif req_type == "addDevice":
-            errors = await self.addDevice()
-        elif req_type == "addAdmin":
-            errors = await self.addAdmin()
-        elif req_type == "changeDevicePassword":
-            errors = await self.changeDevicePassword()
-        elif req_type == "rmDevice":
-            errors = await self.rmDevice()
-        elif req_type == "killSession":
-            errors = await self.killSession()
-        elif req_type == "toggleQueue":
-            errors = await self.toggle_queue()
+
+
+        errors = self.ADMIN_FUNCTIONS.get(req_type, (lambda : "Invalid function"))()
+        if errors:
+            print("Invalid Admin function by user {}: {}".format(self.current_user, req_type))
+            return self.render("error.html", error=errors)
 
         # update queues
         with self.make_session() as session:
@@ -80,7 +84,8 @@ class AdminHandler(UserBaseHandler):
                 print("queues", queues)
             except Exception as e:
                 # todo render an error page
-                return "Error while finding queues"
+                print("Error while finding queues: {}".format(e))
+                return self.render("error.html", error="Query Error")
 
         return self.render("admin.html", queues=queues, messages=errors)
 
@@ -89,8 +94,10 @@ class AdminHandler(UserBaseHandler):
             name = self.get_argument("name")
         except MissingArgumentError:
             return "Missing device type"
+
         with self.make_session() as session:
             await as_future(partial(session.add, DeviceType(name=name, enabled=1)))
+
         return ""
 
     async def addDevice(self):
