@@ -97,7 +97,7 @@ class AdminHandler(UserBaseHandler):
 
         return self.render("admin.html", queues=queues, messages=errors)
 
-    async def addDeviceType(self):
+    async def addDeviceType(self) -> str:
         try:
             name = self.get_argument("name")
         except MissingArgumentError:
@@ -108,7 +108,7 @@ class AdminHandler(UserBaseHandler):
 
         return ""
 
-    async def addDevice(self):
+    async def addDevice(self) -> str:
         try:
             device_info = self.get_argument("device_info")
             device_type = self.get_argument("device_type")
@@ -145,7 +145,7 @@ class AdminHandler(UserBaseHandler):
 
         return error_msg
 
-    async def addAdmin(self):
+    async def addAdmin(self) -> str:
         try:
             username = self.get_argument("username")
             password = self.get_argument("password")
@@ -183,7 +183,7 @@ class AdminHandler(UserBaseHandler):
                 return "Error while attempting to add user"
         return ""
 
-    async def changeDevicePassword(self):
+    async def changeDevicePassword(self) -> str:
         try:
             username = self.get_argument("username")
             password = self.get_argument("password")
@@ -203,7 +203,7 @@ class AdminHandler(UserBaseHandler):
 
         return ""
 
-    async def rmDevice(self):
+    async def rmDevice(self) -> str:
         # TODO: is this safe to do? what are the implications if someone is connected?
         try:
             device = self.get_argument("device")
@@ -220,7 +220,7 @@ class AdminHandler(UserBaseHandler):
                 return "Failed to remove device"
         return ""
 
-    async def killSession(self):
+    async def killSession(self) -> str:
         try:
             deviceName = self.get_argument("device")
         except MissingArgumentError:
@@ -235,8 +235,9 @@ class AdminHandler(UserBaseHandler):
                 return "Error while looking up device"
 
         await DeviceStateHandler.killSession(deviceID[0])
+        return ""
 
-    async def toggle_queue(self):
+    async def toggle_queue(self) -> str:
         try:
             queueID = self.get_argument("queue")
         except MissingArgumentError:
@@ -251,3 +252,5 @@ class AdminHandler(UserBaseHandler):
                 return "Failed to find that queue type"
 
             queue.enabled = 1 if not queue.enabled else 0
+
+        return ""
