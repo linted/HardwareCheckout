@@ -26,8 +26,8 @@ class MainHandler(UserBaseHandler):
         # default values
         terminals = self.ROTerminals
         show_streams = True
-        devices = []
-        queues = []
+        devices = list()
+        queues = list()
         tstreams = self.tstreams
         pictures = self.pictures
         adminuser = False
@@ -86,7 +86,7 @@ class MainHandler(UserBaseHandler):
         async with cls.lock:
             with make_session() as session:
                 cls.RWTerminals = await as_future(
-                    session.query(User.name, DeviceQueue.webUrl)
+                    session.query(User.name, DeviceQueue.roUrl, DeviceQueue.webUrl, DeviceQueue.sshAddr)
                     .join(User.deviceQueueEntry)
                     .filter_by(state="in-use")
                     .all

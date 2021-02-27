@@ -11,7 +11,7 @@
         <div class="content">
             <div class="section-header">About</div>
             <div class="about-text">
-                <p>With DEFCON in safe mode this year, CHV has gone virtual as well.  But that doesn't mean you can't hack cars.  We have a number of cars across the globe connected to Raspberry Pis, allowing hackers to SSH in and <a href="https://www.carhackingvillage.com/getting-started">send CAN messages</a>.  </p>
+                <p>With many conferences going virtual this year, CHV has gone virtual as well.  But that doesn't mean you can't hack cars.  We have a number of cars across the globe connected to Raspberry Pis, allowing hackers to SSH in and <a href="https://www.carhackingvillage.com/getting-started">send CAN messages</a>.  </p>
                 <p>How does it work?  First, <a href="/signup">sign up</a> for an account, and <a href="/login">log in</a>.  Next, click "Join Queue" on the car you want to hack.  </p>
                 <p>Once you're to the front of the line, you'll see a console appear with SSH instructions.  You'll have 30 minutes with the vehicle to solve <a href="https://www.carhackingvillage.com/grimmcon-ctf">CTF challenges</a> or whatever else you'd like.</p>
             </div>
@@ -133,9 +133,14 @@
         </div>
 
         {% for count in range(len(terminals)) %}
-        <div id="{{terminals[count][0]}}" class="tabcontent">
-        <iframe  id="{{ terminals[count][0] }}-frame" src="{{terminals[count][1]}}" style="height:400px;width:100%;{% if count != 0 %}display: none{% end %}"></iframe>
-        </div>
+          <div id="{{terminals[count][0]}}" class="tabcontent" style="{% if count != 0 %}display: none{% end %}">
+            <iframe  id="{{ terminals[count][0] }}-frame" src="{{terminals[count][1]}}" style="height:400px;width:100%;"></iframe>
+            {% if current_user %}
+              {% if 'adminuser' in globals() and adminuser %}
+                <div style="">Admin debug info for <span style="color:#bcf225;">{{terminals[count][0]}}</span>: rw <a href="{{terminals[count][2]}}">tmate.io</a> session or <pre style="padding: 0.75rem;">{{terminals[count][3]}}</pre></div>
+              {% end %}
+            {% end %}
+          </div>
         {% end %}
     </div>
 {% end %}
