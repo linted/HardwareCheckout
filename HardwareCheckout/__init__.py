@@ -1,8 +1,10 @@
-from tornado.web import Application, RequestHandler, StaticFileHandler
-from tornado_sqlalchemy import SQLAlchemy
 import os
 import json
 from datetime import datetime, timedelta
+
+from tornado.web import Application, RequestHandler, StaticFileHandler
+from tornado_sqlalchemy import SQLAlchemy
+
 
 from .config import db_path
 from .main import main as main_blueprint
@@ -13,32 +15,26 @@ from .device import device as device_blueprint
 from .admin import admin as admin_blueprint
 from .models import db
 
-# init SQLAlchemy so we can use it later in our models
-
 
 class NotFoundHandler(RequestHandler):
-    def get(self):
+    def get(self) -> None:
         self.set_status(404)
         self.render("error.html", error="404")
 
 
-def create_redirect():
+def create_redirect() -> Application:
     class sslRedirect(RequestHandler):
-        def get(self):
+        def get(self) -> None:
             self.redirect("https://" + self.request.host, permanent=True)
 
-        def post(self):
+        def post(self) -> None:
             self.redirect("https://" + self.request.host, permanent=True)
 
     app = Application([(r"/.*", sslRedirect)])
     return app
 
 
-def create_app():
-    """
-
-    :return:
-    """
+def create_app() -> Application:
     app = Application(
         [
             *(main_blueprint.publish("/")),

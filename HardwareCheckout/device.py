@@ -1,4 +1,4 @@
-"""
+""" # TODO: update to be accurate
 A brief guide to all the device states:
   * ready  - device is ready to be used but not in queue
   * in-queue - device is queued up to be used
@@ -23,7 +23,9 @@ Other states
 from base64 import b64decode
 from datetime import datetime, timedelta
 from functools import wraps, partial
+from typing import Dict, Optional
 
+from tornado import locks
 from tornado.web import authenticated
 from tornado.escape import json_decode
 from tornado.ioloop import IOLoop
@@ -40,8 +42,18 @@ device = Blueprint()
 
 @device.route("/hook")
 class DeviceStateHandler(UserBaseHandler):
-    __timer = None
-    __timer_dict = dict()
+    __timer: Optional[Timer] = None
+    __timer_dict: Dict[int, Timer] = dict()
+    __lock = locks.Lock()
+
+    def initialize(self, *args, **kwargs):
+        super().initialize(*args, **kwargs)
+        self.SESSION_HANDLERS = {
+            "session_register": self.handle_session_register,
+            "session_join": self.handle_session_join,
+            "session_close": self.handle_session_close,
+        }
+        IOLoop.current().add_callback(self.init_timer)
 
     def get(self):
         # send them home
@@ -49,33 +61,36 @@ class DeviceStateHandler(UserBaseHandler):
         return
 
     async def post(self):
-        # if there is no timer, start one
-        if self.__class__.__timer is None:
-            self.__class__.__timer = Timer(self.__class__.__callback, True)
-            self.__class__.__timer.start()
-
         try:
             data = json_decode(self.request.body)
         except Exception:
-            return
+            return self.render("error.html", error="Invalid Json Format")
 
         message_type = data.get("type", None)
         entity = data.get("entity_id", None)
         user_data = data.get("userdata", None)
         params = data.get("params", None)
         if None in [message_type, entity, user_data, params]:
+            return self.render("error.html", error="Invalid Json Data")
+
+        try:
+            return await self.SESSION_HANDLERS.get(
+                message_type,
+                (lambda x, y, z: None),
+            )(entity, user_data, params)
+        except Exception:
             return
 
-        if message_type == "session_register":
-            await self.handle_session_register(entity, user_data, params)
+    @classmethod
+    async def init_timer(cls):
+        # if there is no timer, start one
+        if cls.__timer is None:
+            async with cls.__lock:
+                if cls.__timer is None:
+                    cls.__timer = Timer(cls.__callback, True)
+                    cls.__timer.start()
 
-        elif message_type == "session_join":
-            await self.handle_session_join(entity, user_data, params)
-
-        elif message_type == "session_close":
-            await self.handle_session_close(entity, user_data, params)
-
-    async def handle_session_register(self, entity, user_data, params):
+    async def handle_session_register(self, entity, user_data, params) -> None:
         # check the user data to see if it is valid
         try:
             username, password = b64decode(user_data).decode().split("=")
@@ -109,12 +124,7 @@ class DeviceStateHandler(UserBaseHandler):
             device.entity_id = entity
             session.add(device)
 
-            deviceID = device.id
-            deviceType = device.type
-
-        # await DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
-
-    async def handle_session_join(self, entity, user_data, params):
+    async def handle_session_join(self, entity, user_data, params) -> None:
         # Check if it is a read only session. We only care about R/W sessions
         if params.get("readonly", True):
             return
@@ -131,8 +141,9 @@ class DeviceStateHandler(UserBaseHandler):
                 device.state = "in-use"
                 session.add(device)
                 await self.device_in_use(device.id)
+        return
 
-    async def handle_session_close(self, entity, user_data, params):
+    async def handle_session_close(self, entity, user_data, params) -> None:
         # Technically there could be a race condition where the close message comes after the next start message.
         # In that case it is ok since the entity ID should have been updated before then.
         with make_session() as session:
@@ -151,60 +162,11 @@ class DeviceStateHandler(UserBaseHandler):
             device.owner = None
             # TODO should I null more fields?
             session.add(device)
+        return
 
     @staticmethod
     async def deprovision_device(deviceID):
         raise NotImplementedError("TODO: this will tell the watcher to kill a session")
-
-    @staticmethod
-    async def check_for_new_owner(deviceID, deviceType):
-        with make_session() as session:
-            next_user = await as_future(
-                session.query(UserQueue)
-                .filter_by(type=deviceType)
-                .order_by(UserQueue.id)
-                .first
-            )
-            if next_user:
-                session.delete(next_user)
-                session.commit()
-                return await DeviceStateHandler.device_in_queue(
-                    deviceID, next_user.userId
-                )
-
-    @staticmethod
-    async def device_in_queue(deviceID, next_user):
-        with make_session() as session:
-            device = await as_future(
-                session.query(DeviceQueue).filter_by(id=deviceID).first
-            )
-            device.state = "in-queue"  # Set this to in queue so the callback doesn't try to hand it out again
-            device.owner = next_user
-            session.add(device)
-
-        timer = Timer(
-            DeviceStateHandler.return_device,
-            repeat=False,
-            timeout=1800,
-            args=[deviceID, "queue_timeout"],
-        )
-        timer.start()
-        try:
-            DeviceStateHandler.push_timer(deviceID, timer)
-        except KeyError:
-            old_timer = DeviceStateHandler.pop_timer(deviceID)
-            old_timer.stop()
-            del old_timer
-            DeviceStateHandler.push_timer(deviceID, timer)
-
-        with make_session() as session:
-            device = await as_future(
-                session.query(DeviceQueue).filter_by(id=deviceID).first
-            )
-            userID = await as_future(
-                session.query(User.id).filter_by(id=next_user).first
-            )
-            on_user_assigned_device(userID[0], device)
 
     @staticmethod
     async def return_device(deviceID, reason):
@@ -261,23 +223,63 @@ class DeviceStateHandler(UserBaseHandler):
     @staticmethod
     async def __callback():
         with make_session() as session:
-            for deviceID, deviceType in await as_future(
-                session.query(DeviceQueue.id, DeviceQueue.type)
-                .filter_by(state="provisioned")
-                .all
+            for device in await as_future(
+                session.query(DeviceQueue).filter_by(state="provisioned").all
             ):
-                await DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
+                next_user = await as_future(
+                    session.query(UserQueue)
+                    .filter_by(type=device.type)
+                    .order_by(UserQueue.id)
+                    .first
+                )
+                if next_user:
+                    userId = next_user.userId
+
+                    device.state = "in-queue"  # Set this to in queue so the callback doesn't try to hand it out again
+                    device.owner = userId
+
+                    session.delete(next_user)
+                    session.add(device)
+                    session.commit()
+
+                    DeviceStateHandler.add_timer(device.id)
+
+                    IOLoop.current().add_callback(
+                        on_user_assigned_device,
+                        userId= userId,
+                        device_id= str(device.id),
+                        device_name= device.type_obj.name,
+                        device_type= device.type,
+                        device_ssh= device.sshAddr,
+                        device_url= device.webUrl,
+                    )
+
+    @staticmethod
+    def add_timer(deviceID):
+        timer = Timer(
+            DeviceStateHandler.return_device,
+            repeat=False,
+            timeout=1800,
+            args=[deviceID, "queue_timeout"],
+        )
+        timer.start()
+        try:
+            DeviceStateHandler.push_timer(deviceID, timer)
+        except KeyError:
+            old_timer = DeviceStateHandler.pop_timer(deviceID)
+            old_timer.stop()
+            del old_timer
+            DeviceStateHandler.push_timer(deviceID, timer)
 
 
 @device.route("/controller")
 class ControllerHandler(DeviceWSHandler):
-    __listeners = {}
+    __listeners: Dict[str,DeviceWSHandler] = {}
 
     async def open(self):
         # TODO : change this check to require a controller user name and password
         # not just any device.
         self.device = await self.check_authentication()
-        # self.__listeners[self.device] = self
 
     async def on_message(self, message):
         try:

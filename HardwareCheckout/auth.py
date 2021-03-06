@@ -17,8 +17,6 @@ class LoginHandler(UserBaseHandler):
     async def post(self):
         """
         Path that handles the actual logging in of users. All super basic at this point.
-
-        :return:
         """
         # Try and get the parameters we care about, exception is thrown if non existent
         try:
@@ -51,7 +49,6 @@ class LoginHandler(UserBaseHandler):
     def get(self):
         """
         Serves the html for the login page.
-        :return:
         """
         return self.render("login.html", messages=None)
 
@@ -61,15 +58,12 @@ class SignUpHandler(UserBaseHandler):
     def get(self):
         """
         Serves the html for the signup page
-        :return:
         """
         return self.render("signup.html", messages=None)
 
     async def post(self):
         """
         Super basic signup handler
-
-        :return:
         """
         # Try and get the parameters we care about, exception is thrown if non existent
         try:
@@ -113,7 +107,6 @@ class LogoutHandler(UserBaseHandler):
     def get(self):
         """
         Path that handles logging a user out.
-        :return:
         """
         self.clear_cookie("user")
         return self.redirect(self.reverse_url("main"))
