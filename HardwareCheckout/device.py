@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from functools import wraps, partial
 from typing import Dict, Optional
 
+from tornado import locks
 from tornado.web import authenticated
 from tornado.escape import json_decode
 from tornado.ioloop import IOLoop
@@ -43,15 +44,16 @@ device = Blueprint()
 class DeviceStateHandler(UserBaseHandler):
     __timer: Optional[Timer] = None
     __timer_dict: Dict[int, Timer] = dict()
+    __lock = locks.Lock()
 
     def initalize(self, *args, **kwargs):
         super().initialize(*args, **kwargs)
-        self.init_timer()
         self.SESSION_HANDLERS = {
             "session_register": self.handle_session_register,
             "session_join": self.handle_session_join,
             "session_close": self.handle_session_close,
         }
+        IOLoop.current().add_callback(self.init_timer)
 
     def get(self):
         # send them home
@@ -80,11 +82,13 @@ class DeviceStateHandler(UserBaseHandler):
             return
 
     @classmethod
-    def init_timer(cls):
+    async def init_timer(cls):
         # if there is no timer, start one
         if cls.__timer is None:
-            cls.__timer = Timer(cls.__callback, True)
-            cls.__timer.start()
+            async with cls.__lock:
+                if cls.__timer is None:
+                    cls.__timer = Timer(cls.__callback, True)
+                    cls.__timer.start()
 
     async def handle_session_register(self, entity, user_data, params) -> None:
         # check the user data to see if it is valid
@@ -119,11 +123,6 @@ class DeviceStateHandler(UserBaseHandler):
             device.state = "provisioned"
             device.entity_id = entity
             session.add(device)
-
-            deviceID = device.id
-            deviceType = device.type
-
-        # await DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
 
     async def handle_session_join(self, entity, user_data, params) -> None:
         # Check if it is a read only session. We only care about R/W sessions
@@ -168,64 +167,6 @@ class DeviceStateHandler(UserBaseHandler):
     @staticmethod
     async def deprovision_device(deviceID):
         raise NotImplementedError("TODO: this will tell the watcher to kill a session")
-
-    @staticmethod
-    async def check_for_new_owner(deviceID, deviceType):
-        with make_session() as session:
-            next_user = await as_future(
-                session.query(UserQueue)
-                .filter_by(type=deviceType)
-                .order_by(UserQueue.id)
-                .first
-            )
-            if next_user:
-                session.delete(next_user)
-                session.commit()
-                return await DeviceStateHandler.device_in_queue(
-                    deviceID, next_user.userId
-                )
-
-    @staticmethod
-    async def device_in_queue(deviceID, next_user):
-        with make_session() as session:
-            device = await as_future(
-                session.query(DeviceQueue).filter_by(id=deviceID).first
-            )
-            device.state = "in-queue"  # Set this to in queue so the callback doesn't try to hand it out again
-            device.owner = next_user
-            session.add(device)
-            device_name = device.type_obj.name
-            device_type = DeviceQueue.type
-            device_ssh = DeviceQueue.sshAddr
-            device_url = DeviceQueue.webUrl
-            userID = (
-                await as_future(session.query(User.id).filter_by(id=next_user).first)
-            )[0]
-
-        timer = Timer(
-            DeviceStateHandler.return_device,
-            repeat=False,
-            timeout=1800,
-            args=[deviceID, "queue_timeout"],
-        )
-        timer.start()
-        try:
-            DeviceStateHandler.push_timer(deviceID, timer)
-        except KeyError:
-            old_timer = DeviceStateHandler.pop_timer(deviceID)
-            old_timer.stop()
-            del old_timer
-            DeviceStateHandler.push_timer(deviceID, timer)
-
-            
-        on_user_assigned_device(
-            userID,
-            device_id=str(deviceID),
-            device_name=device_name,
-            device_type=device_type,
-            device_ssh=device_ssh,
-            device_url=device_url,
-        )
 
     @staticmethod
     async def return_device(deviceID, reason):
@@ -282,12 +223,55 @@ class DeviceStateHandler(UserBaseHandler):
     @staticmethod
     async def __callback():
         with make_session() as session:
-            for deviceID, deviceType in await as_future(
-                session.query(DeviceQueue.id, DeviceQueue.type)
-                .filter_by(state="provisioned")
-                .all
+            for device in await as_future(
+                session.query(DeviceQueue).filter_by(state="provisioned").all
             ):
-                await DeviceStateHandler.check_for_new_owner(deviceID, deviceType)
+                next_user = await as_future(
+                    session.query(UserQueue)
+                    .filter_by(type=device.type)
+                    .order_by(UserQueue.id)
+                    .first
+                )
+                if next_user:
+                    userId = next_user.userId
+
+                    device.state = "in-queue"  # Set this to in queue so the callback doesn't try to hand it out again
+                    device.owner = userId
+                    
+                    session.delete(next_user)
+                    session.add(device)
+                    session.commit()
+
+                    DeviceStateHandler.add_timer(device.id)
+
+                    IOLoop.current().add_callback(
+                        on_user_assigned_device,
+                        kwargs={
+                            "userID": userId,
+                            "device_id": str(device.id),
+                            "device_name": device.type_obj.name,
+                            "device_type": DeviceQueue.type,
+                            "device_ssh": DeviceQueue.sshAddr,
+                            "device_url": DeviceQueue.webUrl,
+                        },
+                    )
+
+    @staticmethod
+    def add_timer(deviceID):
+        timer = Timer(
+            DeviceStateHandler.return_device,
+            repeat=False,
+            timeout=1800,
+            args=[deviceID, "queue_timeout"],
+        )
+        timer.start()
+        try:
+            DeviceStateHandler.push_timer(deviceID, timer)
+        except KeyError:
+            old_timer = DeviceStateHandler.pop_timer(deviceID)
+            old_timer.stop()
+            del old_timer
+            DeviceStateHandler.push_timer(deviceID, timer)
 
 
 @device.route("/controller")
