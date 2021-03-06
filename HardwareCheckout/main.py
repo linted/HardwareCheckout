@@ -24,7 +24,7 @@ class MainHandler(UserBaseHandler):
     def initialize(self):
         # If no background queue update thread as started, start it
         if self.timer is None:
-            ioloop.IOLoop.current().run_in_executor(func=self.startTimer)
+            ioloop.IOLoop.current().run_in_executor(None, self.startTimer)
 
     @classmethod
     async def startTimer(cls):
