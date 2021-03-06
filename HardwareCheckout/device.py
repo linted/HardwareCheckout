@@ -246,7 +246,7 @@ class DeviceStateHandler(UserBaseHandler):
 
                     IOLoop.current().add_callback(
                         on_user_assigned_device,
-                        userID= userId,
+                        userId= userId,
                         device_id= str(device.id),
                         device_name= device.type_obj.name,
                         device_type= DeviceQueue.type,
