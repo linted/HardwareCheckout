@@ -249,9 +249,9 @@ class DeviceStateHandler(UserBaseHandler):
                         userId= userId,
                         device_id= str(device.id),
                         device_name= device.type_obj.name,
-                        device_type= DeviceQueue.type,
-                        device_ssh= DeviceQueue.sshAddr,
-                        device_url= DeviceQueue.webUrl,
+                        device_type= device.type,
+                        device_ssh= device.sshAddr,
+                        device_url= device.webUrl,
                     )
 
     @staticmethod
