@@ -46,7 +46,7 @@ class DeviceStateHandler(UserBaseHandler):
     __timer_dict: Dict[int, Timer] = dict()
     __lock = locks.Lock()
 
-    def initalize(self, *args, **kwargs):
+    def initialize(self, *args, **kwargs):
         super().initialize(*args, **kwargs)
         self.SESSION_HANDLERS = {
             "session_register": self.handle_session_register,
@@ -237,7 +237,7 @@ class DeviceStateHandler(UserBaseHandler):
 
                     device.state = "in-queue"  # Set this to in queue so the callback doesn't try to hand it out again
                     device.owner = userId
-                    
+
                     session.delete(next_user)
                     session.add(device)
                     session.commit()
