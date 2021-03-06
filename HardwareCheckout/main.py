@@ -21,7 +21,7 @@ class MainHandler(UserBaseHandler):
     tstreams: Iterable[str] = []
     lock = locks.Lock()
 
-    async def initialize(self, unused):
+    async def initialize(self):
         # If no background queue update thread as started, start it
         if self.timer is None:
             async with self.lock:  # we don't want the overhead of getting the lock EVERY loop, so this should be fine
