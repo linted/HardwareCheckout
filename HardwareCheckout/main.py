@@ -89,7 +89,7 @@ class MainHandler(UserBaseHandler):
         async with cls.lock:
             with make_session() as session:
                 cls.RWTerminals = await as_future(
-                    session.query(User.name, DeviceQueue.webUrl)
+                    session.query(User.name, DeviceQueue.roUrl, DeviceQueue.webUrl, DeviceQueue.sshAddr)
                     .join(User.deviceQueueEntry)
                     .filter_by(state="in-use")
                     .all
