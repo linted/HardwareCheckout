@@ -274,13 +274,12 @@ class DeviceStateHandler(UserBaseHandler):
 
 @device.route("/controller")
 class ControllerHandler(DeviceWSHandler):
-    __listeners = {}
+    __listeners: Dict[str,DeviceWSHandler] = {}
 
     async def open(self):
         # TODO : change this check to require a controller user name and password
         # not just any device.
         self.device = await self.check_authentication()
-        # self.__listeners[self.device] = self
 
     async def on_message(self, message):
         try:
