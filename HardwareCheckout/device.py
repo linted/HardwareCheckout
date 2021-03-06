@@ -74,7 +74,7 @@ class DeviceStateHandler(UserBaseHandler):
             return self.render("error.html", error="Invalid Json Data")
 
         try:
-            return self.SESSION_HANDLERS.get(
+            return await self.SESSION_HANDLERS.get(
                 message_type,
                 (lambda x, y, z: None),
             )(entity, user_data, params)
@@ -246,14 +246,12 @@ class DeviceStateHandler(UserBaseHandler):
 
                     IOLoop.current().add_callback(
                         on_user_assigned_device,
-                        kwargs={
-                            "userID": userId,
-                            "device_id": str(device.id),
-                            "device_name": device.type_obj.name,
-                            "device_type": DeviceQueue.type,
-                            "device_ssh": DeviceQueue.sshAddr,
-                            "device_url": DeviceQueue.webUrl,
-                        },
+                        userID= userId,
+                        device_id= str(device.id),
+                        device_name= device.type_obj.name,
+                        device_type= DeviceQueue.type,
+                        device_ssh= DeviceQueue.sshAddr,
+                        device_url= DeviceQueue.webUrl,
                     )
 
     @staticmethod
