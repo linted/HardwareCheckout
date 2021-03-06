@@ -2,7 +2,7 @@ from typing import Iterable, Tuple, Dict, Union
 
 from tornado_sqlalchemy import as_future
 from sqlalchemy import func, or_
-from tornado import locks
+from tornado import locks, ioloop
 
 
 from .models import DeviceQueue, DeviceType, User, UserQueue, TwitchStream
@@ -21,13 +21,17 @@ class MainHandler(UserBaseHandler):
     tstreams: Iterable[str] = []
     lock = locks.Lock()
 
-    async def initialize(self):
+    def initialize(self):
         # If no background queue update thread as started, start it
         if self.timer is None:
-            async with self.lock:  # we don't want the overhead of getting the lock EVERY loop, so this should be fine
-                if self.timer is None:
-                    print("Scheduling")
-                    self.__class__.timer = Timer(self.updateQueues, timeout=5)
+            ioloop.IOLoop.current().run_in_executor(func=self.startTimer)
+
+    @classmethod
+    async def startTimer(cls):
+        async with cls.lock:  # we don't want the overhead of getting the lock EVERY loop, so this should be fine
+            if cls.timer is None:
+                print("Scheduling")
+                cls.timer = Timer(cls.updateQueues, timeout=5)
 
     async def get(self):
         """
