@@ -62,7 +62,7 @@ class AdminHandler(UserBaseHandler):
             return self.render("admin.html", messages="Error in form submission")
 
         try:
-            errors = self.ADMIN_FUNCTIONS.get(req_type, (lambda: "Invalid function"))()
+            errors = await self.ADMIN_FUNCTIONS.get(req_type, (lambda: "Invalid function"))()
         except Exception as e:
             errors = str(e)
         finally:
