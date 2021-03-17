@@ -7,7 +7,6 @@ from sqlalchemy.orm import sessionmaker
 from argparse import ArgumentParser
 import sys
 import os
-import configparser
 
 parser = ArgumentParser()
 parser.add_argument("-t", "--type", help="Device type to add", required=True)
@@ -20,7 +19,7 @@ s = session()
 
 
 def removeDeviceType(deviceType):
-    device = s.query(DeviceQueue).filter_by(name=deviceType).first()
+    device = s.query(DeviceType).filter_by(name=deviceType).first()
     if not device:
         print("no device type found - {}!".format(deviceType))
         sys.exit(0)
