@@ -29,6 +29,10 @@ def removeDeviceType(deviceType):
 
 
 def main():
+    if input("ARE YOU SURE YOU KNOW WHAT YOU ARE DOING? DEVICES COULD BE LOST LIKE THIS! [y/N] ").lower() != 'y':
+        print("Good, think about what you almost did!")
+        exit(0)
+
     args = parser.parse_args()
     removeDeviceType(args.type)
 
