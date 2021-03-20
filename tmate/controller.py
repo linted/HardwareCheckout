@@ -10,6 +10,7 @@ from tornado.websocket import websocket_connect
 from tornado.escape import json_decode, json_encode
 from tornado.httpclient import HTTPRequest
 from tornado.process import Subprocess as subprocess
+from tornado.gen import sleep
 
 ACTIVE_CLIENTS = {}
 device_re = re.compile(r"^.*(device\d+)$")
@@ -183,7 +184,12 @@ async def main():
         profiles["controller"]["password"],
         profiles,
     )
-    await newClient.connect()
+    while True:
+        try:
+            await newClient.connect()
+            break
+        except Exception:
+            await sleep(10)
 
     DeviceHandler = New_Device_Handler(client=newClient, profiles=profiles)
 
