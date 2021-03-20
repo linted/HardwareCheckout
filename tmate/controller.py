@@ -18,8 +18,9 @@ device_re = re.compile(r"^.*(device\d+)$")
 
 class Client(object):
     devices = {}
+    registered = []
 
-    def __init__(self, url, username, password, profiles, timeout=300):
+    def __init__(self, url, username, password, profiles, timeout=10):
         self.url = url
         self.username = username
         self.password = password
@@ -75,6 +76,8 @@ class Client(object):
                 await self.connect()
             except Exception:
                 IOLoop.current().call_later(10, self.keep_alive)  # retry in 10 seconds
+            else:
+                await self.reregister_devices()
         else:
             print("Keep Alive")
             try:
@@ -115,9 +118,17 @@ class Client(object):
             return False
         return True
 
-    async def register_device(self, device):
-        self.ws.write_message(json_encode({"type": "register", "params": device}))
+    async def register_device(self,deviceName):
+        if deviceName not in self.registered: 
+            self.registered.append(deviceName)
+        await self.send_registration_msg(deviceName)
 
+    async def reregister_devices(self):
+        for deviceName in self.registered:
+            await self.send_registration_msg(deviceName)
+
+    async def send_registration_msg(self, device):
+        await self.ws.write_message(json_encode({"type": "register", "params": device}))
 
 class New_Device_Handler:
     def __init__(self, client, profiles={}):
@@ -126,7 +137,17 @@ class New_Device_Handler:
 
     async def handle_create_event(self, pathname):
         print("New Device Created")
-        await register_device(pathname, self.client, self.profiles)
+        await self.register_device(pathname, self.profiles)
+
+    async def register_device(self, path, profiles):
+        matches = device_re.match(path)
+        if matches:
+            profile_name = matches.group(1)
+
+            clientProfile = profiles.get(profile_name, False)
+            if clientProfile:
+                print("Registering new Client: {}".format(clientProfile["username"]))
+                await self.client.register_device(clientProfile["username"])
 
 
 def get_profiles():
@@ -148,17 +169,6 @@ def get_profiles():
 
         all_profiles[key] = settings
     return all_profiles
-
-
-async def register_device(path, client, profiles):
-    matches = device_re.match(path)
-    if matches:
-        profile_name = matches.group(1)
-
-        clientProfile = profiles.get(profile_name, False)
-        if clientProfile:
-            print("Registering new Client: {}".format(clientProfile["username"]))
-            await client.register_device(clientProfile["username"])
 
 
 async def watch_directories(directories, handler):
