@@ -36,8 +36,8 @@ case $(uname -m) in
     i386)   TMATE=$TMATE_i386 ;;
     i686)   TMATE=$TMATE_i386 ;;
     x86_64) TMATE=$TMATE_AMD64 ;;
-    arm|armv6l)    TMATE=$TMATEARMHF ;;
-    arm|armv7l)    dpkg --print-architecture | grep -q "arm64" && TMATE=$TMATE64 || TMATE=$TMATE32 ;;
+    arm|armv6l)    TMATE=$TMATE_ARMHF ;;
+    arm|armv7l)    dpkg --print-architecture | grep -q "arm64" && TMATE=$TMATE_ARM_64 || TMATE=$TMATE_ARM_32 ;;
 esac
 
 if [ -z $TMATE ]; then
