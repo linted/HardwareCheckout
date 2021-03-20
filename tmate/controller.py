@@ -24,6 +24,10 @@ class Client(object):
         self.password = password
         self.timeout = timeout
         self.profiles = profiles
+        self.keep_alive_timer = None
+
+    def __del__(self):
+        self.keep_alive_timer.stop()
 
     def auth_header(self, username, password):
         return {
@@ -36,11 +40,17 @@ class Client(object):
         try:
             self.ws = await websocket_connect(
                 HTTPRequest(
-                    url=self.url, headers=self.auth_header(self.username, self.password)
+                    url=self.url,
+                    headers=self.auth_header(self.username, self.password),
+                    connect_timeout=10,
                 )
             )
 
-            PeriodicCallback(self.keep_alive, self.timeout * 1000).start()
+            if self.keep_alive_timer == None:
+                self.keep_alive_timer = PeriodicCallback(
+                    self.keep_alive, self.timeout * 1000
+                )
+                self.keep_alive_timer.start()
             IOLoop.current().add_callback(self.recv_loop)
 
         except Exception:
@@ -60,14 +70,17 @@ class Client(object):
 
     async def keep_alive(self):
         if self.ws is None:
-            await self.connect()
+            try:
+                await self.connect()
+            except Exception:
+                IOLoop.current().call_later(10, self.keep_alive)  # retry in 10 seconds
         else:
             print("Keep Alive")
             try:
                 await self.ws.write_message(json_encode({"type": "keep-alive"}))
             except Exception:
                 self.ws = None
-                IOLoop.current().add_callback(self.keep_alive)
+                IOLoop.current().call_later(10, self.keep_alive)  # retry in 10 seconds
 
     async def handle_message(self, message):
         try:
