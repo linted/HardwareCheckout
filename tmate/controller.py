@@ -20,7 +20,7 @@ class Client(object):
     devices = {}
     registered = []
 
-    def __init__(self, url, username, password, profiles, timeout=10):
+    def __init__(self, url, username, password, profiles, timeout=30):
         self.url = url
         self.username = username
         self.password = password
