@@ -16,7 +16,7 @@ while [ 1 ]; do
   read -p "Install and setup postgresql? (y/n) " -n1 $standalone
   echo # to get a new line since read doesn't give us one
   standalone=$(echo "$standalone" | awk '{print tolower($0)}')
-  if [ $standalone = 'y' ] && [ $standalone = 'n' ]; then
+  if [ $standalone = 'y' ] || [ $standalone = 'n' ]; then
     break
   fi
 done
