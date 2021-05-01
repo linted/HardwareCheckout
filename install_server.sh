@@ -160,7 +160,11 @@ if [ ! -d "$APP_PATH/venv" ]; then
 fi
 
 source $APP_PATH/venv/bin/activate
-$APP_PATH/venv/bin/pip3 install -r $APP_PATH/requirements.txt
+if [ 'y' = $standalone ]; then
+  $APP_PATH/venv/bin/pip3 install -r $APP_PATH/postgres_requirements.txt
+else
+  $APP_PATH/venv/bin/pip3 install -r $APP_PATH/mysql_requirements.txt
+fi
 $APP_PATH/venv/bin/python3 $APP_PATH/setup.py -c
 deactivate
 EOF
