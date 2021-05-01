@@ -1,15 +1,32 @@
 #!/bin/bash
 
 #@author: dtechshield 
+#@author: linted
+
+t=$(which dpkg)
+if [ $t ]; then
+  echo "ERROR! Couldn't find dpkg! Is this a debian based system?"
+  exit 1
+fi 
+
+# check to see the type of db they want
+standalone="q"
+while [ 1 ]; do
+  echo "postgresql is not recomended for use with CTFd"
+  read -p "Install and setup postgresql? (y/n) " -n1 $standalone
+  echo # to get a new line since read doesn't give us one
+  standalone=$(echo "$standalone" | awk '{print tolower($0)}')
+  if [ $standalone = 'y' ] && [ $standalone = 'n' ]; then
+    break
+  fi
+done
 
 #This assumes all is installed under /opt/HardwareCheckout
 GIT_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 APP_PATH=/opt/HardwareCheckout
+COOKIEKEY=cookie.key
 DBNAME=chvapp
 DBUNAME=chvapp
-DBPASS=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
-DBKEY=cookie.key
-
 
 echo "Run this once and you should be set... Make sure to run it as root!"
 echo "Installing required system packages...(if needed)"
@@ -22,45 +39,53 @@ else
 	sudo apt-get -qq -y install python3-pip
 fi
 
-if sudo dpkg -l | sudo grep postgresql 2>&1 > /dev/null; then
-	echo "postpgres exists..."
-else
-	echo "postgres does not exist; installing..."
-	sudo apt-get -qq -y update
-	sudo apt-get -qq -y install postgresql postgresql-contrib postgresql-server-dev-all
-	sudo service start postgresql
-fi
 
-echo "Configuring the database..."
-sudo -u postgres -s psql -c "SELECT datname FROM pg_catalog.pg_database WHERE datname='$DBNAME'" | grep -wq $DBNAME
-DB_EXISTS=$?
+if [ $standalone = 'y' ]; then
+  DBPASS=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
+  if sudo dpkg -l | sudo grep postgresql 2>&1 > /dev/null; then
+    echo "postpgres exists..."
+  else
+    echo "postgres does not exist; installing..."
+    sudo apt-get -qq -y update
+    sudo apt-get -qq -y install postgresql postgresql-contrib postgresql-server-dev-all
+    sudo service start postgresql
+  fi
 
+  echo "Configuring the database..."
+  sudo -u postgres -s psql -c "SELECT datname FROM pg_catalog.pg_database WHERE datname='$DBNAME'" | grep -wq $DBNAME
+  DB_EXISTS=$?
 
-if [[ "$DB_EXISTS" -eq 0 ]]; then
-    echo "$DBNAME exists.. Leaving it as it is... If you want a fresh DB drop it manually and try again..."
-    while true; do
-    read -p "Do you want me to continue? (Y/n)?" yn
-    case $yn in
-        [Yy]* ) break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
-  done
+  if [[ "$DB_EXISTS" -eq 0 ]]; then
+      echo "$DBNAME exists.. Leaving it as it is... If you want a fresh DB drop it manually and try again..."
+      while true; do
+      read -p "Do you want me to continue? (Y/n)?" yn
+      case $yn in
+          [Yy]* ) break;;
+          [Nn]* ) exit;;
+          * ) echo "Please answer yes or no.";;
+      esac
+    done
 
-else
+  else
 
-#Create Postgresql Pre-reqs
-sudo -u postgres -s <<EOF
+    #Create Postgresql Pre-reqs
+    sudo -u postgres -s <<EOF
 psql -c "CREATE USER $DBUNAME WITH PASSWORD '$DBPASS' CREATEDB;"
 createdb -O$DBUNAME -Eutf8 $DBNAME
 echo "Postgres user '$DBUNAME' and database '$DBNAME' created."
 EOF
 
+  fi
+  echo "Creating web server user $DBUNAME"
+  sudo useradd -m $DBUNAME -s /bin/bash
+
+  DBConnectionString="mysql+pymysql://$DBUNAME:$DBPASS@127.0.0.1:5432/$DBNAME"
+
+else
+  echo "NOTE: you will need to configure your connection string after this script, then run ./setup.py!"
+  DBConnectionString='mysql+pymysql://'
 fi
 
-
-echo "Creating web server user $DBUNAME"
-sudo useradd -m $DBUNAME -s /bin/bash
 
 
 clone_repo() {
@@ -88,7 +113,13 @@ fi
 echo "Writting application config '$APP_PATH'/HardwareCheckout/config.py - please configure your SSL certificate information if you want to run HTTPS"
 sudo bash -c "cat << EOF > '$APP_PATH'/HardwareCheckout/config.py
 #!/usr/bin/env python3
-db_path = 'postgresql+psycopg2://$DBUNAME:$DBPASS@127.0.0.1:5432/$DBNAME'
+db_path = '$DBConnectionString'
+db_ssl = {
+  'ssl': 
+    {
+      'ca': ''
+    }
+  }
 ssl_config = {
   'certfile':'',
   'keyfile':''
@@ -98,7 +129,7 @@ EOF"
 TDSK=$(head -10 /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | sort -r | head -n 1)
 
 
-sudo bash -c "echo $TDSK >> $APP_PATH/$DBKEY"
+sudo bash -c "echo $TDSK >> $APP_PATH/$COOKIEKEY"
 
 
 #Generate run.sh for local runs
@@ -110,7 +141,7 @@ EOF"
 
 sudo chown -R $DBUNAME:$DBUNAME $APP_PATH
 sudo -u $DBUNAME chmod a+x $APP_PATH/run.sh
-sudo chmod 640 $APP_PATH/$DBKEY
+sudo chmod 640 $APP_PATH/$COOKIEKEY
 
 
 echo "Installing required application packages...(if needed)"

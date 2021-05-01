@@ -3,7 +3,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import relationship
 
 # from . import db
-from .config import db_path
+from .config import db_path, db_ssl
 from tornado_sqlalchemy import SQLAlchemy, as_future
 from functools import partial
 
@@ -15,6 +15,7 @@ db = SQLAlchemy(
         "pool_recycle": 60 * 60,
         "pool_size": 30,
     },
+    connect_args=db_ssl,
 )
 
 
