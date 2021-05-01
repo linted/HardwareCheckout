@@ -13,7 +13,7 @@ fi
 standalone="q"
 while [ 1 ]; do
   echo "postgresql is not recomended for use with CTFd"
-  read -p "Install and setup postgresql? (y/n) " -n1 $standalone
+  read -p "Install and setup postgresql? (y/n) " -n1 standalone
   echo # to get a new line since read doesn't give us one
   standalone=$(echo "$standalone" | awk '{print tolower($0)}')
   if [ $standalone = 'y' ] || [ $standalone = 'n' ]; then
@@ -76,8 +76,6 @@ echo "Postgres user '$DBUNAME' and database '$DBNAME' created."
 EOF
 
   fi
-  echo "Creating web server user $DBUNAME"
-  sudo useradd -m $DBUNAME -s /bin/bash
 
   DBConnectionString="postgresql+psycopg2://$DBUNAME:$DBPASS@127.0.0.1:5432/$DBNAME"
   CTFdConnectionString="'DO_NOT_USE'"
@@ -107,8 +105,10 @@ else
         * ) echo "Please answer yes or no.";;
     esac
   done
-    
 fi
+
+echo "Creating web server user $DBUNAME"
+sudo useradd -m $DBUNAME -s /bin/bash
 
 #Configure Application
 echo "Writting application config '$APP_PATH'/HardwareCheckout/config.py - please configure your SSL certificate information if you want to run HTTPS"
