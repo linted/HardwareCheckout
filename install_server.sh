@@ -79,11 +79,12 @@ EOF
   echo "Creating web server user $DBUNAME"
   sudo useradd -m $DBUNAME -s /bin/bash
 
-  DBConnectionString="mysql+pymysql://$DBUNAME:$DBPASS@127.0.0.1:5432/$DBNAME"
-
+  DBConnectionString="postgresql+psycopg2://$DBUNAME:$DBPASS@127.0.0.1:5432/$DBNAME"
+  CTFdConnectionString="'DO_NOT_USE'"
 else
   echo "NOTE: you will need to configure your connection string after this script, then run ./setup.py!"
   DBConnectionString='mysql+pymysql://'
+  CTFdConnectionString="'mysql+pymysql://'"
 fi
 
 
@@ -120,6 +121,7 @@ db_ssl = {
       'ca': ''
     }
   }
+ctfd_db_path=$CTFdConnectionString
 ssl_config = {
   'certfile':'',
   'keyfile':''
