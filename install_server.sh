@@ -118,7 +118,7 @@ db_path = '$DBConnectionString'
 db_ssl = {
   'ssl': 
     {
-      'ca': ''
+      'sslca': ''
     }
   }
 ctfd_db_path=$CTFdConnectionString
