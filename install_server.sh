@@ -3,8 +3,8 @@
 #@author: dtechshield 
 #@author: linted
 
-t=$(which dpkg)
-if [ $t ]; then
+which dpkg
+if [ $? ]; then
   echo "ERROR! Couldn't find dpkg! Is this a debian based system?"
   exit 1
 fi 
