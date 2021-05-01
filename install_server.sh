@@ -4,7 +4,7 @@
 #@author: linted
 
 which dpkg
-if [ $? ]; then
+if [ $? -eq 1 ]; then
   echo "ERROR! Couldn't find dpkg! Is this a debian based system?"
   exit 1
 fi 
