@@ -3,7 +3,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import relationship
 
 # from . import db
-from .config import db_path, db_ssl
+from .config import db_path
 from tornado_sqlalchemy import SQLAlchemy, as_future
 from functools import partial
 
