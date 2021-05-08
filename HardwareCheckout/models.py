@@ -3,7 +3,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import relationship
 
 # from . import db
-from .config import db_path
+from .config import db_path, ctfd_db_path
 from tornado_sqlalchemy import SQLAlchemy, as_future
 from functools import partial
 
@@ -16,6 +16,17 @@ db = SQLAlchemy(
         "pool_size": 30,
     },
 )
+
+if ctfd_db_path:
+    ctfd_db = SQLAlchemy(
+        url=ctfd_db_path,
+        engine_options={
+            "max_overflow": 15,
+            "pool_pre_ping": True,
+            "pool_recycle": 60 * 60,
+            "pool_size": 30,
+        },
+    )
 
 
 class User(db.Model):
