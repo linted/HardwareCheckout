@@ -15,7 +15,6 @@ db = SQLAlchemy(
         "pool_recycle": 60 * 60,
         "pool_size": 30,
     },
-    connect_args=db_ssl,
 )
 
 

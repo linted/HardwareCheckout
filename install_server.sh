@@ -115,12 +115,6 @@ echo "Writting application config '$APP_PATH'/HardwareCheckout/config.py - pleas
 sudo bash -c "cat << EOF > '$APP_PATH'/HardwareCheckout/config.py
 #!/usr/bin/env python3
 db_path = '$DBConnectionString'
-db_ssl = {
-  'ssl': 
-    {
-      'sslca': ''
-    }
-  }
 ctfd_db_path=$CTFdConnectionString
 ssl_config = {
   'certfile':'',
