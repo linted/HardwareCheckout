@@ -10,7 +10,7 @@ from tornado_sqlalchemy import SessionMixin, as_future
 
 from .models import DeviceQueue, Role, DeviceType, User, UserQueue
 from .webutil import Blueprint, UserBaseHandler, make_session
-from .auth import PASSWORD_CRYPTO_TYPE
+from .auth import PasswordHasher
 from .device import DeviceStateHandler
 
 admin = Blueprint()
@@ -195,9 +195,7 @@ class AdminHandler(UserBaseHandler):
                 device = await as_future(
                     session.query(DeviceQueue).filter_by(name=username).one
                 )
-                device.password = generate_password_hash(
-                    password, method=PASSWORD_CRYPTO_TYPE
-                )
+                device.password = PasswordHasher.hash(password)
             except Exception:
                 return "Error while updating password"
 
