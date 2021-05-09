@@ -5,7 +5,6 @@ from typing import Optional, Awaitable, Dict, Coroutine
 
 from sqlalchemy import func
 from tornado.web import authenticated, MissingArgumentError, RequestHandler
-from werkzeug.security import generate_password_hash
 from tornado_sqlalchemy import SessionMixin, as_future
 
 from .models import DeviceQueue, Role, DeviceType, User, UserQueue
@@ -132,9 +131,7 @@ class AdminHandler(UserBaseHandler):
                     session.add(
                         DeviceQueue(
                             name=config[section]["username"],
-                            password=generate_password_hash(
-                                config[section]["password"], method=PASSWORD_CRYPTO_TYPE
-                            ),
+                            password=PasswordHasher.hash(config[section]["password"]),
                             state="want-provision",
                             type=device_type_id,
                         )
@@ -172,9 +169,7 @@ class AdminHandler(UserBaseHandler):
                         session.add,
                         User(
                             name=username,
-                            password=generate_password_hash(
-                                password, method=PASSWORD_CRYPTO_TYPE
-                            ),
+                            password=PasswordHasher.hash(password),
                             roles=[admin, human, device],
                         ),
                     )

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+from argparse import ArgumentParser
+
 from HardwareCheckout.models import User, Role
 from HardwareCheckout.config import db_path
+from HardwareCheckout.auth import PasswordHasher
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from werkzeug.security import generate_password_hash
-from argparse import ArgumentParser
+
 
 parser = ArgumentParser()
 parser.add_argument("-u", "--username", help="Admin user name", required=True)
@@ -22,7 +25,7 @@ device = s.query(Role).filter_by(name="Device").first()
 s.add(
     User(
         name=args.username,
-        password=generate_password_hash(args.password, method="pbkdf2:sha256:45000"),
+        password=PasswordHasher.hash(args.password),
         roles=[admin, human, device],
     )
 )
