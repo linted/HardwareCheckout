@@ -1,11 +1,13 @@
+from functools import partial
+
+from .config import db_path, ctfd_db_path
+
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy import func, or_
 from sqlalchemy.orm import relationship
-
-# from . import db
-from .config import db_path, ctfd_db_path
+from sqlalchemy.ext.automap import automap_base
 from tornado_sqlalchemy import SQLAlchemy, as_future
-from functools import partial
+
 
 db = SQLAlchemy(
     url=db_path,
@@ -27,7 +29,8 @@ if ctfd_db_path:
             "pool_size": 30,
         },
     )
-
+else:
+    ctfd_db = False
 
 class User(db.Model):
     """
