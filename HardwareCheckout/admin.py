@@ -7,7 +7,7 @@ from sqlalchemy import func
 from tornado.web import authenticated, MissingArgumentError, RequestHandler
 from tornado_sqlalchemy import SessionMixin, as_future
 
-from .models import DeviceQueue, Role, DeviceType, User, UserQueue
+from .models import DeviceQueue, Role, DeviceType, User, UserQueue, UserRoles
 from .webutil import Blueprint, UserBaseHandler, make_session
 from .auth import PasswordHasher
 from .device import DeviceStateHandler
@@ -34,7 +34,7 @@ class AdminHandler(UserBaseHandler):
         with self.make_session() as session:
             try:
                 roles = await as_future(
-                    session.query(User.roles).filter_by(id=self.current_user).one
+                    session.query(Role.name).join(UserRoles).join(User).filter(User.id==self.current_user).all
                 )
                 if 'Admin' not in roles:
                     return self.redirect(self.reverse_url("main"))
@@ -67,7 +67,7 @@ class AdminHandler(UserBaseHandler):
         with self.make_session() as session:
             try:
                 roles = await as_future(
-                    session.query(User.roles).filter_by(id=self.current_user).one
+                    session.query(Role.name).join(UserRoles).join(User).filter(User.id==self.current_user).all
                 )
                 if 'Admin' not in roles:
                     return self.redirect(self.reverse_url("main"))
