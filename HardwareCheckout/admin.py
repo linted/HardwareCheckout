@@ -36,7 +36,10 @@ class AdminHandler(UserBaseHandler):
                 roles = await as_future(
                     session.query(Role.name).join(UserRoles).join(User).filter(User.id==self.current_user).all
                 )
-                if 'Admin' not in roles:
+                for role in roles:
+                    if 'Admin' in role:
+                        break
+                else:
                     return self.redirect(self.reverse_url("main"))
             except Exception:
                 return self.redirect(self.reverse_url("main"))
@@ -69,7 +72,10 @@ class AdminHandler(UserBaseHandler):
                 roles = await as_future(
                     session.query(Role.name).join(UserRoles).join(User).filter(User.id==self.current_user).all
                 )
-                if 'Admin' not in roles:
+                for role in roles:
+                    if 'Admin' in role:
+                        break
+                else:
                     return self.redirect(self.reverse_url("main"))
             except Exception:
                 return self.redirect(self.reverse_url("main"))
