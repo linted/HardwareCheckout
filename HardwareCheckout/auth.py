@@ -15,7 +15,7 @@ auth = Blueprint()
 
 PasswordHasher = CryptContext(schemes=("bcrypt_sha256","pbkdf2_sha256"), bcrypt_sha256__version=1, pbkdf2_sha256__default_rounds=45000)
 
-ctfd_hash_query = text("""select password from users where name=:name""")
+ctfd_hash_query = text("""select password, type from users where name=:name""")
 
 @auth.route("/login", name="login")
 class LoginHandler(UserBaseHandler):
@@ -44,7 +44,7 @@ class LoginHandler(UserBaseHandler):
             else:
                 with make_session(ctfd_db) as session:
                     # the derefernce will throw an exception if no results returned
-                    userHash = (await as_future(session.execute(ctfd_hash_query, {'name':name}).first))[0]
+                    userHash, usertype = (await as_future(session.execute(ctfd_hash_query, {'name':name}).first))
                 with self.make_session() as session:
                     try:
                         # query repeated a few lines below
@@ -53,12 +53,14 @@ class LoginHandler(UserBaseHandler):
                         ))[0]
                     except Exception:
                         # This happens if they registered on ctfd and we don't have an entry for them in our db
-                        roles = await as_future(session.query(Role).filter_by(name="Human").first)
+                        roles = [await as_future(session.query(Role).filter_by(name="Human").first)]
+                        if usertype == "admin":
+                            roles.append(await as_future(session.query(Role).filter_by(name="Admin").first()))
 
                         new_user = User(
                             name=name,
                             ctf=1,
-                            roles=[roles]
+                            roles=roles
                         )
 
                         session.add(new_user)
