@@ -13,7 +13,7 @@ from .config import ctfd_signup_url
 
 auth = Blueprint()
 
-PasswordHasher = CryptContext(schemes=("bcrypt_sha256","pbkdf2_sha256"), pbkdf2_sha256__default_rounds=45000)
+PasswordHasher = CryptContext(schemes=("bcrypt_sha256","pbkdf2_sha256"), bcrypt_sha256__version=1, pbkdf2_sha256__default_rounds=45000)
 
 ctfd_hash_query = text("""select password from users where name=:name""")
 
