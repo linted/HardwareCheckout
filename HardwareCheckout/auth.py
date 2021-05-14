@@ -72,7 +72,7 @@ class LoginHandler(UserBaseHandler):
             return self.render("login.html", messages="Invalid username or password")
 
         # Check if they provided the right password
-        if not userPass or not PasswordHasher.verify(password, userHash):
+        if not userHash or not PasswordHasher.verify(password, userHash):
             return self.render("login.html", messages="Invalid username or password")
 
         # Successful login, they deserve a cookie
