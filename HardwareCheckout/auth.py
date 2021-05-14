@@ -55,7 +55,7 @@ class LoginHandler(UserBaseHandler):
                         # This happens if they registered on ctfd and we don't have an entry for them in our db
                         roles = [await as_future(session.query(Role).filter_by(name="Human").first)]
                         if usertype == "admin":
-                            roles.append(await as_future(session.query(Role).filter_by(name="Admin").first()))
+                            roles.append(await as_future(session.query(Role).filter_by(name="Admin").first))
 
                         new_user = User(
                             name=name,
