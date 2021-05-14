@@ -33,6 +33,16 @@ class AdminHandler(UserBaseHandler):
     async def get(self):
         with self.make_session() as session:
             try:
+                roles = await as_future(
+                    session.query(User.roles).filter_by(id=self.current_user).one
+                )
+                if 'Admin' not in roles:
+                    return self.redirect(self.reverse_url("main"))
+            except Exception:
+                return self.redirect(self.reverse_url("main"))
+
+
+            try:
                 queues = await as_future(
                     session.query(
                         DeviceType.id,
@@ -54,6 +64,16 @@ class AdminHandler(UserBaseHandler):
 
     @authenticated
     async def post(self):
+        with self.make_session() as session:
+            try:
+                roles = await as_future(
+                    session.query(User.roles).filter_by(id=self.current_user).one
+                )
+                if 'Admin' not in roles:
+                    return self.redirect(self.reverse_url("main"))
+            except Exception:
+                return self.redirect(self.reverse_url("main"))
+
         # Try and get the type parameter so we can decide what type of request this is
         try:
             req_type = self.get_argument("type")
