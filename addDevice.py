@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-from HardwareCheckout import create_app
-from HardwareCheckout.models import DeviceQueue, Role, DeviceType
-from HardwareCheckout.config import db_path
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from werkzeug.security import generate_password_hash
-from argparse import ArgumentParser
 import os
 import configparser
 import sys
+from argparse import ArgumentParser
+
+
+from HardwareCheckout import create_app
+from HardwareCheckout.models import DeviceQueue, Role, DeviceType
+from HardwareCheckout.config import db_path
+from HardwareCheckout.auth import PasswordHasher
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 
 parser = ArgumentParser()
@@ -36,7 +40,7 @@ def deviceAdd(username, password, devtype):
     s.add(
         DeviceQueue(
             name=username,
-            password=generate_password_hash(password, method="pbkdf2:sha256:45000"),
+            password=PasswordHasher.hash(password),
             state="want-provision",
             type=typeID.id,
         )

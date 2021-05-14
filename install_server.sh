@@ -78,11 +78,13 @@ EOF
   fi
 
   DBConnectionString="postgresql+psycopg2://$DBUNAME:$DBPASS@127.0.0.1:5432/$DBNAME"
-  CTFdConnectionString="'DO_NOT_USE'"
+  CTFdConnectionString="False"
+  CTFdURL="False"
 else
   echo "NOTE: you will need to configure your connection string after this script, then run ./setup.py!"
   DBConnectionString='mysql+pymysql://'
   CTFdConnectionString="'mysql+pymysql://'"
+  CTFdURL="''"
 fi
 
 
@@ -116,6 +118,7 @@ sudo bash -c "cat << EOF > '$APP_PATH'/HardwareCheckout/config.py
 #!/usr/bin/env python3
 db_path = '$DBConnectionString'
 ctfd_db_path=$CTFdConnectionString
+ctfd_signup_url=$CTFdURL
 ssl_config = {
   'certfile':'',
   'keyfile':''

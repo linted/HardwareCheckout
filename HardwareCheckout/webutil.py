@@ -201,10 +201,10 @@ class Timer:
 
 
 @contextmanager
-def make_session():
+def make_session(engine=db):
     session = None
     try:
-        session = db.sessionmaker()
+        session = engine.sessionmaker()
         yield session
     except Exception:
         if session:

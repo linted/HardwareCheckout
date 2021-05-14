@@ -5,12 +5,11 @@ from typing import Optional, Awaitable, Dict, Coroutine
 
 from sqlalchemy import func
 from tornado.web import authenticated, MissingArgumentError, RequestHandler
-from werkzeug.security import generate_password_hash
 from tornado_sqlalchemy import SessionMixin, as_future
 
-from .models import DeviceQueue, Role, DeviceType, User, UserQueue
+from .models import DeviceQueue, Role, DeviceType, User, UserQueue, UserRoles
 from .webutil import Blueprint, UserBaseHandler, make_session
-from .auth import PASSWORD_CRYPTO_TYPE
+from .auth import PasswordHasher
 from .device import DeviceStateHandler
 
 admin = Blueprint()
@@ -34,6 +33,19 @@ class AdminHandler(UserBaseHandler):
     async def get(self):
         with self.make_session() as session:
             try:
+                roles = await as_future(
+                    session.query(Role.name).join(UserRoles).join(User).filter(User.id==self.current_user).all
+                )
+                for role in roles:
+                    if 'Admin' in role:
+                        break
+                else:
+                    return self.redirect(self.reverse_url("main"))
+            except Exception:
+                return self.redirect(self.reverse_url("main"))
+
+
+            try:
                 queues = await as_future(
                     session.query(
                         DeviceType.id,
@@ -55,6 +67,19 @@ class AdminHandler(UserBaseHandler):
 
     @authenticated
     async def post(self):
+        with self.make_session() as session:
+            try:
+                roles = await as_future(
+                    session.query(Role.name).join(UserRoles).join(User).filter(User.id==self.current_user).all
+                )
+                for role in roles:
+                    if 'Admin' in role:
+                        break
+                else:
+                    return self.redirect(self.reverse_url("main"))
+            except Exception:
+                return self.redirect(self.reverse_url("main"))
+
         # Try and get the type parameter so we can decide what type of request this is
         try:
             req_type = self.get_argument("type")
@@ -132,9 +157,7 @@ class AdminHandler(UserBaseHandler):
                     session.add(
                         DeviceQueue(
                             name=config[section]["username"],
-                            password=generate_password_hash(
-                                config[section]["password"], method=PASSWORD_CRYPTO_TYPE
-                            ),
+                            password=PasswordHasher.hash(config[section]["password"]),
                             state="want-provision",
                             type=device_type_id,
                         )
@@ -172,9 +195,7 @@ class AdminHandler(UserBaseHandler):
                         session.add,
                         User(
                             name=username,
-                            password=generate_password_hash(
-                                password, method=PASSWORD_CRYPTO_TYPE
-                            ),
+                            password=PasswordHasher.hash(password),
                             roles=[admin, human, device],
                         ),
                     )
@@ -195,9 +216,7 @@ class AdminHandler(UserBaseHandler):
                 device = await as_future(
                     session.query(DeviceQueue).filter_by(name=username).one
                 )
-                device.password = generate_password_hash(
-                    password, method=PASSWORD_CRYPTO_TYPE
-                )
+                device.password = PasswordHasher.hash(password)
             except Exception:
                 return "Error while updating password"
 
