@@ -1,14 +1,14 @@
 from configparser import ConfigParser
 from functools import partial
-from contextlib import contextmanager
-from typing import Optional, Awaitable, Dict, Coroutine
+from typing import Dict, Coroutine, Iterable
 
 from sqlalchemy import func
-from tornado.web import authenticated, MissingArgumentError, RequestHandler
-from tornado_sqlalchemy import SessionMixin, as_future
+from tornado.locks import Lock, ioloop
+from tornado.web import authenticated, MissingArgumentError
+from tornado_sqlalchemy import as_future
 
-from .models import DeviceQueue, Role, DeviceType, User, UserQueue, UserRoles
-from .webutil import Blueprint, UserBaseHandler, make_session
+from .models import DeviceQueue, Role, DeviceType, User, UserQueue, UserRoles, ctfd_db
+from .webutil import Blueprint, UserBaseHandler, make_session, Timer
 from .auth import PasswordHasher
 from .device import DeviceStateHandler
 
@@ -17,6 +17,10 @@ admin = Blueprint()
 
 @admin.route("/", name="admin")
 class AdminHandler(UserBaseHandler):
+    queues: Iterable[str] = []
+    queueTimer = None
+    queueTimerLock = Lock()
+
     def initialize(self, *args, **kwargs):
         super().initialize(*args, **kwargs)
         self.ADMIN_FUNCTIONS: Dict[str, Coroutine[None, None, str]] = {
@@ -28,6 +32,33 @@ class AdminHandler(UserBaseHandler):
             "killSession": self.killSession,
             "toggleQueue": self.toggle_queue,
         }
+        if not AdminHandler.queueTimer:
+            ioloop.IOLoop.current().add_callback(self.startQueueUpdateTimer)
+
+    @classmethod
+    async def startQueueUpdateTimer(cls):
+        async with cls.queueTimerLock():
+            if cls.queueTimer is None:
+                cls.queueTimer = Timer(cls.queueUpdate, timeout=300)
+
+    @classmethod
+    async def queueUpdate(cls):
+        with make_session() as session:
+            try:
+                cls.queues = await as_future(
+                        session.query(
+                            DeviceType.id,
+                            DeviceType.name,
+                            func.count(UserQueue.userId),
+                            DeviceType.enabled,
+                        )
+                        .select_from(DeviceType)
+                        .join(UserQueue, isouter=True)
+                        .group_by(DeviceType.id, DeviceType.name)
+                        .all
+                    )
+            except Exception:
+                pass # Uhhhhh... what do?
 
     @authenticated
     async def get(self):
@@ -44,26 +75,7 @@ class AdminHandler(UserBaseHandler):
             except Exception:
                 return self.redirect(self.reverse_url("main"))
 
-
-            try:
-                queues = await as_future(
-                    session.query(
-                        DeviceType.id,
-                        DeviceType.name,
-                        func.count(UserQueue.userId),
-                        DeviceType.enabled,
-                    )
-                    .select_from(DeviceType)
-                    .join(UserQueue, isouter=True)
-                    .group_by(DeviceType.id, DeviceType.name)
-                    .all
-                )
-            except Exception as e:
-                # todo render an error page
-                print("Error while finding queues: {}".format(e))
-                return self.render("error.html", error="Query Error")
-
-        return self.render("admin.html", queues=queues, messages=None)
+        return self.render("admin.html", queues=self.queues, messages=None)
 
     @authenticated
     async def post(self):
@@ -99,28 +111,7 @@ class AdminHandler(UserBaseHandler):
                 )
                 return self.render("error.html", error=errors)
 
-        # update queues
-        with self.make_session() as session:
-            try:
-                queues = await as_future(
-                    session.query(
-                        DeviceType.id,
-                        DeviceType.name,
-                        func.count(UserQueue.userId),
-                        DeviceType.enabled,
-                    )
-                    .select_from(DeviceType)
-                    .join(UserQueue, isouter=True)
-                    .group_by(DeviceType.id, DeviceType.name)
-                    .all
-                )
-                print("queues", queues)
-            except Exception as e:
-                # todo render an error page
-                print("Error while finding queues: {}".format(e))
-                return self.render("error.html", error="Query Error")
-
-        return self.render("admin.html", queues=queues, messages=errors)
+        return self.render("admin.html", queues=self.queues, messages=errors)
 
     async def addDeviceType(self) -> str:
         try:
@@ -130,6 +121,8 @@ class AdminHandler(UserBaseHandler):
 
         with self.make_session() as session:
             await as_future(partial(session.add, DeviceType(name=name, enabled=1)))
+
+        await self.queueUpdate()
 
         return ""
 
@@ -169,6 +162,8 @@ class AdminHandler(UserBaseHandler):
         return error_msg
 
     async def addAdmin(self) -> str:
+        if ctfd_db:
+            return "Please use the CTFd system to manage admin roles"
         try:
             username = self.get_argument("username")
             password = self.get_argument("password")
@@ -271,5 +266,7 @@ class AdminHandler(UserBaseHandler):
                 return "Failed to find that queue type"
 
             queue.enabled = 1 if not queue.enabled else 0
+
+        await self.queueUpdate()
 
         return ""
