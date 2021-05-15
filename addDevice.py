@@ -4,8 +4,6 @@ import configparser
 import sys
 from argparse import ArgumentParser
 
-
-from HardwareCheckout import create_app
 from HardwareCheckout.models import DeviceQueue, Role, DeviceType
 from HardwareCheckout.config import db_path
 from HardwareCheckout.auth import PasswordHasher
@@ -23,7 +21,6 @@ parser.add_argument(
     "-i", "--ini", help="Ini file containing list of device users", required=False
 )
 args = parser.parse_args()
-# parser.add_argument("Roles", nargs='+')
 
 session = sessionmaker(bind=create_engine(db_path))
 s = session()

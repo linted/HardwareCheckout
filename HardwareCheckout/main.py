@@ -1,7 +1,7 @@
 from typing import Iterable, Tuple, Dict, Union
 
 from tornado_sqlalchemy import as_future
-from sqlalchemy import func, or_
+from sqlalchemy import func
 from tornado import locks, ioloop
 
 
@@ -86,39 +86,38 @@ class MainHandler(UserBaseHandler):
 
     @classmethod
     async def updateQueues(cls):
-        async with cls.lock:
-            with make_session() as session:
-                cls.RWTerminals = await as_future(
-                    session.query(User.name, DeviceQueue.roUrl, DeviceQueue.webUrl, DeviceQueue.sshAddr)
-                    .join(User.deviceQueueEntry)
-                    .filter_by(state="in-use")
-                    .all
-                )
-                cls.queues = [
-                    {"id": item[0], "name": item[1], "size": item[2]}
-                    for item in await as_future(
-                        session.query(
-                            DeviceType.id,
-                            DeviceType.name,
-                            func.count(UserQueue.userId),
-                        )
-                        .select_from(DeviceType)
-                        .filter_by(enabled=1)
-                        .join(UserQueue, isouter=True)
-                        .group_by(DeviceType.id, DeviceType.name)
-                        .all
-                    )
-                ]
-                cls.ROTerminals = await as_future(
-                    session.query(User.name, DeviceQueue.roUrl)
-                    .join(User.deviceQueueEntry)
-                    .filter(DeviceQueue.state == "in-use")
-                    .filter(User.ctf == 0)
-                    .all
-                )
-                cls.tstreams = await as_future(session.query(TwitchStream.name).all)
-                cls.pictures = await as_future(
+        with make_session() as session:
+            cls.RWTerminals = await as_future(
+                session.query(User.name, DeviceQueue.roUrl, DeviceQueue.webUrl, DeviceQueue.sshAddr)
+                .join(User.deviceQueueEntry)
+                .filter_by(state="in-use")
+                .all
+            )
+            cls.queues = [
+                {"id": item[0], "name": item[1], "size": item[2]}
+                for item in await as_future(
                     session.query(
-                        DeviceType.image_path, DeviceType.name, DeviceType.enabled
-                    ).all
+                        DeviceType.id,
+                        DeviceType.name,
+                        func.count(UserQueue.userId),
+                    )
+                    .select_from(DeviceType)
+                    .filter_by(enabled=1)
+                    .join(UserQueue, isouter=True)
+                    .group_by(DeviceType.id, DeviceType.name)
+                    .all
                 )
+            ]
+            cls.ROTerminals = await as_future(
+                session.query(User.name, DeviceQueue.roUrl)
+                .join(User.deviceQueueEntry)
+                .filter(DeviceQueue.state == "in-use")
+                .filter(User.ctf == 0)
+                .all
+            )
+            cls.tstreams = await as_future(session.query(TwitchStream.name).all)
+            cls.pictures = await as_future(
+                session.query(
+                    DeviceType.image_path, DeviceType.name, DeviceType.enabled
+                ).all
+            )

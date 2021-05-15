@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-from HardwareCheckout.models import TwitchStream
-from HardwareCheckout.config import db_path
+from argparse import ArgumentParser
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import argparse
+
+from HardwareCheckout.models import TwitchStream
+from HardwareCheckout.config import db_path
 
 parser = ArgumentParser()
 parser.add_argument("-n", "--name", help="Stream name to delete", required=True)

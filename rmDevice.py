@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-from HardwareCheckout import create_app
-from HardwareCheckout.models import DeviceQueue, Role, DeviceType
-from HardwareCheckout.config import db_path
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from argparse import ArgumentParser
 import sys
 import os
 import configparser
+
+from argparse import ArgumentParser
+
+from HardwareCheckout.models import DeviceQueue
+from HardwareCheckout.config import db_path
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 parser = ArgumentParser()
 parser.add_argument("-u", "--username", help="Device user name", required=False)

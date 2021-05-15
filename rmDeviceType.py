@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-from HardwareCheckout import create_app
-from HardwareCheckout.models import DeviceQueue, Role, DeviceType
+import sys
+from argparse import ArgumentParser
+
+from HardwareCheckout.models import DeviceType
 from HardwareCheckout.config import db_path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from argparse import ArgumentParser
-import sys
-import os
+
 
 parser = ArgumentParser()
 parser.add_argument("-t", "--type", help="Device type to add", required=True)

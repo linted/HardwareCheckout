@@ -1,9 +1,9 @@
 import datetime
-from tornado.web import RequestHandler, MissingArgumentError, authenticated
+from tornado.web import authenticated
 from tornado_sqlalchemy import as_future
 
 # from . import db, socketio
-from .models import User, UserQueue, DeviceQueue, DeviceType
+from .models import User, DeviceQueue
 from .webutil import Blueprint, UserBaseHandler
 
 terms = Blueprint()

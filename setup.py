@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-from HardwareCheckout import create_app
-from HardwareCheckout.models import Role, db
-from HardwareCheckout.config import db_path
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 import argparse
 import os
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from HardwareCheckout.models import Role, db
+from HardwareCheckout.config import db_path
 
 parser = argparse.ArgumentParser()
 parser.add_argument(

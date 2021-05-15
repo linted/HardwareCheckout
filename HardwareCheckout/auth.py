@@ -1,10 +1,7 @@
 
-from functools import partial
-
-
 from passlib.context import CryptContext
-from tornado.web import RequestHandler, MissingArgumentError, authenticated
-from tornado_sqlalchemy import SessionMixin, as_future
+from tornado.web import MissingArgumentError, authenticated
+from tornado_sqlalchemy import as_future
 from sqlalchemy.sql import text
 
 from .models import User, Role, db, ctfd_db

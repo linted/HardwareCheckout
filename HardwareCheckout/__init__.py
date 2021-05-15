@@ -1,12 +1,8 @@
 import os
-import json
-from datetime import datetime, timedelta
 
-from tornado.web import Application, RequestHandler, StaticFileHandler
-from tornado_sqlalchemy import SQLAlchemy
+from tornado.web import Application, RequestHandler
 
 
-from .config import db_path
 from .main import main as main_blueprint
 from .auth import auth as auth_blueprint
 from .terminals import terms as terminal_blueprint

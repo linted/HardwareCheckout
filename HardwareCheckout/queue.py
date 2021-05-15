@@ -1,6 +1,6 @@
-from tornado.web import authenticated, RequestHandler
+from tornado.web import authenticated
 from tornado.websocket import WebSocketClosedError, WebSocketHandler
-from tornado_sqlalchemy import SessionMixin, as_future
+from tornado_sqlalchemy import as_future
 
 from .models import DeviceType, UserQueue, User
 from .webutil import Blueprint, Waiters, UserBaseHandler, Timer, make_session

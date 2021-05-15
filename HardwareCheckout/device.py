@@ -21,21 +21,17 @@ Other states
 """
 
 from base64 import b64decode
-from datetime import datetime, timedelta
-from functools import wraps, partial
 from typing import Dict, Optional
 
 from tornado import locks
-from tornado.web import authenticated
 from tornado.escape import json_decode
 from tornado.ioloop import IOLoop
-from sqlalchemy.orm.exc import NoResultFound
 from tornado_sqlalchemy import as_future
 from werkzeug.security import check_password_hash
 
-from .models import DeviceQueue, DeviceType, UserQueue, User
+from .models import DeviceQueue, UserQueue, User
 from .webutil import Blueprint, UserBaseHandler, DeviceWSHandler, Timer, make_session
-from .queue import QueueWSHandler, on_user_assigned_device, on_user_deallocated_device
+from .queue import on_user_assigned_device, on_user_deallocated_device
 
 device = Blueprint()
 

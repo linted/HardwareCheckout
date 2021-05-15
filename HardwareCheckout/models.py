@@ -3,9 +3,8 @@ from functools import partial
 from .config import db_path, ctfd_db_path
 
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
-from sqlalchemy import func, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.automap import automap_base
 from tornado_sqlalchemy import SQLAlchemy, as_future
 
 

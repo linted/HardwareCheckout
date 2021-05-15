@@ -1,17 +1,14 @@
 from base64 import b64decode
-from functools import partial
 from contextlib import contextmanager
-from asyncio import iscoroutine
 
 from sqlalchemy.orm.exc import NoResultFound
 from tornado.ioloop import IOLoop, PeriodicCallback
-from tornado.locks import Condition
 from tornado.web import RequestHandler, URLSpec
 from tornado.websocket import WebSocketHandler
 from tornado_sqlalchemy import SessionMixin, as_future
 from werkzeug.security import check_password_hash
 
-from .models import DeviceQueue, User, db
+from .models import DeviceQueue, db
 
 
 class UserBaseHandler(SessionMixin, RequestHandler):
