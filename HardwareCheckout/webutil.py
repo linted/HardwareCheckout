@@ -6,9 +6,9 @@ from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.web import RequestHandler, URLSpec
 from tornado.websocket import WebSocketHandler
 from tornado_sqlalchemy import SessionMixin, as_future
-from werkzeug.security import check_password_hash
 
 from .models import DeviceQueue, db
+from .auth import PasswordHasher
 
 
 class UserBaseHandler(SessionMixin, RequestHandler):
@@ -67,13 +67,13 @@ class DeviceWSHandler(SessionMixin, WebSocketHandler):
 
         try:
             with self.make_session() as session:
-                deviceID, devicePassword = await as_future(
+                deviceID, deviceHash = await as_future(
                     session.query(DeviceQueue.id, DeviceQueue.password)
                     .filter_by(name=name)
                     .one
                 )
 
-            if not check_password_hash(devicePassword, password):
+            if not password or not PasswordHasher.verify(password, deviceHash):
                 return False
                 
             return deviceID
