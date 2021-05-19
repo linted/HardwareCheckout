@@ -20,13 +20,13 @@
             {% for picture in pictures %}
                 {% if picture.enabled == 1 %}
                 <div class="car-icon-group">
-                    <img src="{{ static_url('images/' + picture.image_path) }}"/>
+                    <img src="{{ static_url('images/' + str(picture.image_path)) }}"/>
                     <div class="car-icon-group--make-model">{{ picture.name }}</div>
                 </div>
                 {% end %}
                 {% if picture.enabled == 0 %}
                 <div class="car-icon-group car-icon-group--disabled">
-                    <img src="{{ static_url('images/' + picture.image_path) }}"/>
+                    <img src="{{ static_url('images/' + str(picture.image_path)) }}"/>
                     <div class="car-icon-group--make-model">{{ picture.name }} [offline]</div>
                 </div>
                 {% end %}

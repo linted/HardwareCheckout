@@ -37,9 +37,10 @@ class AdminHandler(UserBaseHandler):
 
     @classmethod
     async def startQueueUpdateTimer(cls):
-        async with cls.queueTimerLock():
+        async with cls.queueTimerLock:
             if cls.queueTimer is None:
                 cls.queueTimer = Timer(cls.queueUpdate, timeout=300)
+                await cls.queueUpdate() # call it here, otherwise the first call is in 300 seconds
 
     @classmethod
     async def queueUpdate(cls):
@@ -141,9 +142,9 @@ class AdminHandler(UserBaseHandler):
 
         error_msg = ""
         with self.make_session() as session:
-            device_type_id = await as_future(
+            device_type_id = (await as_future(
                 session.query(DeviceType.id).filter_by(name=device_type).one
-            )
+            ))[0]
 
             for section in config.sections():
                 try:
