@@ -37,7 +37,7 @@ class AdminHandler(UserBaseHandler):
 
     @classmethod
     async def startQueueUpdateTimer(cls):
-        async with cls.queueTimerLock():
+        async with cls.queueTimerLock:
             if cls.queueTimer is None:
                 cls.queueTimer = Timer(cls.queueUpdate, timeout=300)
 
