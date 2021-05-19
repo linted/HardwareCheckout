@@ -1,14 +1,11 @@
 from base64 import b64decode
 from contextlib import contextmanager
 
-from sqlalchemy.orm.exc import NoResultFound
 from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado.web import RequestHandler, URLSpec
-from tornado.websocket import WebSocketHandler
-from tornado_sqlalchemy import SessionMixin, as_future
+from tornado_sqlalchemy import SessionMixin
 
-from .models import DeviceQueue, db
-from .auth import PasswordHasher
+from .models import db
 
 
 class UserBaseHandler(SessionMixin, RequestHandler):
@@ -20,64 +17,6 @@ class UserBaseHandler(SessionMixin, RequestHandler):
             user_cookie = int(self.get_secure_cookie("user", max_age_days=2))
             return user_cookie
         except Exception:
-            return False
-
-
-class DeviceBaseHandler(SessionMixin, RequestHandler):
-    def get_current_user(self):
-        """
-        Not allowed to be async
-        """
-        if "Authorization" not in self.request.headers:
-            return self.unauthorized()
-        if not self.request.headers["Authorization"].startswith("Basic "):
-            return self.unauthorized()
-
-        name, password = (
-            b64decode(self.request.headers["Authorization"][6:]).decode().split(":", 1)
-        )
-
-        try:
-            device = DeviceQueue.query.filter_by(name=name).one()
-            if not check_password_hash(device.password, password):
-                return self.unauthorized()
-            return device
-        except NoResultFound:
-            return self.unauthorized()
-
-    def unauthorized(self):
-        """
-        Not allowed to be async, used by get_current_user
-        """
-        self.set_header("WWW-Authenticate", 'Basic realm="CarHackingVillage"')
-        self.set_status(401)
-        return False
-
-
-class DeviceWSHandler(SessionMixin, WebSocketHandler):
-    async def check_authentication(self):
-        if "Authorization" not in self.request.headers:
-            return False
-        if not self.request.headers["Authorization"].startswith("Basic "):
-            return False
-
-        name, password = (
-            b64decode(self.request.headers["Authorization"][6:]).decode().split(":", 1)
-        )
-
-        try:
-            with self.make_session() as session:
-                deviceID, deviceHash = await as_future(
-                    session.query(DeviceQueue.id, DeviceQueue.password)
-                    .filter_by(name=name)
-                    .one
-                )
-
-            if not password or not PasswordHasher.verify(password, deviceHash):
-                return False
-                
-            return deviceID
-        except NoResultFound:
             return False
 
 
