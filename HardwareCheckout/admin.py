@@ -141,9 +141,9 @@ class AdminHandler(UserBaseHandler):
 
         error_msg = ""
         with self.make_session() as session:
-            device_type_id = await as_future(
+            device_type_id = (await as_future(
                 session.query(DeviceType.id).filter_by(name=device_type).one
-            )[0]
+            ))[0]
 
             for section in config.sections():
                 try:
