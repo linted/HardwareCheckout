@@ -54,7 +54,7 @@ body {
 
 @media screen and (max-width: 1087px) {
   .navbar-menu {
-    background-color: #10041e;
+    background-color: #000000;
     margin-left: 16px;
   }
 }
@@ -210,7 +210,7 @@ a:hover {
 }
 
 .login-signup--box input {
-    background: #10041e;
+    background: #000000;
     color: white;
     border: 1px solid #4998E4;
     border-radius: 0px;
@@ -218,7 +218,7 @@ a:hover {
 }
 
 .login-signup--box input:hover {
-    background: #10041e;
+    background: #000000;
     color: white;
     border: 1px solid #B7D8ED;
     border-radius: 0px;
@@ -440,7 +440,7 @@ a:hover {
     border-color: #4998E4;
     border-style: solid;
     background-color: #4998E4;
-    color: #10041e;
+    color: #000000;
     text-transform: uppercase;
     letter-spacing: 1px;
     border-radius: 0px;
@@ -471,7 +471,7 @@ thead.queue-table--row td {
 
 
 .form-section textarea, .form-section input {
-    background: #10041e;
+    background: #000000;
     color: white;
     border: 1px solid #4998E4;
     border-radius: 0px;
@@ -479,7 +479,7 @@ thead.queue-table--row td {
 }
 
 .form-section textarea:hover, .form-section input {
-    background: #10041e;
+    background: #000000;
     color: white;
     border: 1px solid #B7D8ED;
     border-radius: 0px;
@@ -546,7 +546,7 @@ thead.queue-table--row td {
 
 .queue-header .queue-header--name {
   display: flex;
-  color: #10041e;
+  color: #000000;
   padding: 4px 12px 4px 4px;
   background-color: #B7D8ED;
 }
@@ -695,7 +695,7 @@ thead.queue-table--row td {
 
 .available-device-header .available-device-header--name {
   display: flex;
-  color: #10041e;
+  color: #000000;
   padding: 4px 12px 4px 4px;
   background-color: #4998E4;
 }
