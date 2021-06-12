@@ -21,7 +21,7 @@ var updater = {
             "</div>"
     },
     renderDevices: function (devices) {
-        return "<div class=\"section-header\">Devices available</div>" +
+        return "<div class=\"section-header\"><div>Devices available</div>" +
             "<div class=\"preloader\"><span class=\"line line-1\"></span>" +
             "<span class=\"line line-2\"></span><span class=\"line line-3\"></span>" +
             "<span class=\"line line-4\"></span><span class=\"line line-5\"></span></div>" +
