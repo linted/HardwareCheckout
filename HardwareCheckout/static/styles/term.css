@@ -16,6 +16,7 @@ body {
   background-size: contain;
   color: white;
   font-family: 'Share Tech Mono';
+  background-color: black !important;
 }
 
 /* Navigation bar */
