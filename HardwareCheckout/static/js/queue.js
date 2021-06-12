@@ -22,6 +22,9 @@ var updater = {
     },
     renderDevices: function (devices) {
         return "<div class=\"section-header\">Devices available</div>" +
+            "<div class=\"preloader\"><span class=\"line line-1\"></span>" +
+            "<span class=\"line line-2\"></span><span class=\"line line-3\"></span>" +
+            "<span class=\"line line-4\"></span><span class=\"line line-5\"></span></div>" +
             "<div class=\"available-devices--row\">" +
             devices.map(updater.renderDeviceInfo).join("") +
             "</div>";
