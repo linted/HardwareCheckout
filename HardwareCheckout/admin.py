@@ -117,11 +117,14 @@ class AdminHandler(UserBaseHandler):
     async def addDeviceType(self) -> str:
         try:
             name = self.get_argument("name")
+            picture = self.get_argument("picture")
         except MissingArgumentError:
             return "Missing device type"
 
+        sanitizedPicture = picture.split("/")[-1] #TODO: figure out how to exploit this
+
         with self.make_session() as session:
-            await as_future(partial(session.add, DeviceType(name=name, enabled=1)))
+            await as_future(partial(session.add, DeviceType(name=name, enabled=1, image_path=sanitizedPicture)))
 
         await self.queueUpdate()
 
