@@ -131,7 +131,7 @@ class DeviceStateHandler(UserBaseHandler):
             except Exception:
                 return
 
-            if not check_password_hash(device.password, password):
+            if not PasswordHasher.verify(password, device.password):
                 return
 
             # register entity id with db and update ssh/web/webro info
