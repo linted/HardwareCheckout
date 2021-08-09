@@ -31,7 +31,7 @@ from tornado_sqlalchemy import as_future, SessionMixin
 from sqlalchemy.orm.exc import NoResultFound
 
 
-from .models import DeviceQueue, UserQueue
+from .models import DeviceQueue, UserQueue, User
 from .webutil import Blueprint, UserBaseHandler, Timer, make_session
 from .queue import on_user_assigned_device, on_user_deallocated_device
 from .auth import PasswordHasher
@@ -253,7 +253,10 @@ class DeviceStateHandler(UserBaseHandler):
             ):
                 next_user = await as_future(
                     session.query(UserQueue)
-                    .filter_by(type=device.type)
+                    .join(User)
+                    .join(DeviceQueue)
+                    .filter(UserQueue.type==device.type)
+                    .filter(UserQueue.userId.notin_(session.query(DeviceQueue.owner).subquery()))
                     .order_by(UserQueue.id)
                     .first
                 )
